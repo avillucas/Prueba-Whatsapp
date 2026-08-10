@@ -1,6 +1,8 @@
 # Etapa de construcción
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 # Copiamos los archivos de dependencias
@@ -18,6 +20,8 @@ RUN npm run build
 
 # Etapa de producción
 FROM node:20-alpine AS runner
+
+RUN apk add --no-cache git
 
 WORKDIR /app
 
