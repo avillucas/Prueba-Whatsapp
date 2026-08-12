@@ -2,6 +2,10 @@ import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeys
 import { Boom } from '@hapi/boom';
 import * as qrcode from 'qrcode-terminal';
 import pino from 'pino';
+import { DecisionEngine } from 'motor-decision';
+import { cfp412Mockup } from 'motor-decision/dist/data/cfp412Mockup';
+
+const sessions = new Map<string, DecisionEngine>();
 
 async function connectToWhatsApp() {
     // Implementamos useMultiFileAuthState para persistir la sesión en la carpeta auth_info
@@ -53,8 +57,26 @@ async function connectToWhatsApp() {
         if (textMessage) {
             console.log(`Mensaje recibido de ${msg.key.remoteJid}: ${textMessage}`);
             
-            // Respondemos al remitente
-            await sock.sendMessage(msg.key.remoteJid!, { text: 'Hola Mundo!!!' });
+            const remoteJid = msg.key.remoteJid!;
+            if (!sessions.has(remoteJid)) {
+                sessions.set(remoteJid, new DecisionEngine(cfp412Mockup, "MSG_INICIAL"));
+                const engine = sessions.get(remoteJid)!;
+                const currentNode = engine.getCurrentNode();
+                await sock.sendMessage(remoteJid, { text: currentNode.text });
+                return;
+            }
+
+            const engine = sessions.get(remoteJid)!;
+            const { nextNode, extractedData, error } = engine.processAnswer(textMessage.trim());
+
+            if (nextNode) {
+                if (extractedData) {
+                    console.log(`[Dato extraído] ${extractedData.key}: ${extractedData.value}`);
+                }
+                await sock.sendMessage(remoteJid, { text: nextNode.text });
+            } else {
+                await sock.sendMessage(remoteJid, { text: `⚠️ Opción no válida.\n\n${engine.getCurrentNode().text}` });
+            }
         }
     });
 }

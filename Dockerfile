@@ -5,15 +5,17 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
+# Copiamos motor-decision (necesario para la dependencia local file:../motorDecision)
+COPY motorDecision /motorDecision
+
 # Copiamos los archivos de dependencias
-COPY package.json ./
-COPY tsconfig.json ./
+COPY ["Prueba Whatsapp/package.json", "Prueba Whatsapp/tsconfig.json", "./"]
 
 # Instalamos dependencias
 RUN npm install
 
 # Copiamos el código fuente
-COPY src ./src
+COPY ["Prueba Whatsapp/src", "./src"]
 
 # Compilamos TypeScript a JavaScript
 RUN npm run build
@@ -25,12 +27,13 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# Copiamos los archivos de dependencias
-COPY package.json ./
+# Copiamos motor-decision también en producción (npm install intentará leer file:../motorDecision)
+COPY motorDecision /motorDecision
 
-# Instalamos dependencias (incluyendo devDependencies temporalmente para evitar problemas o usamos --omit=dev si están bien separadas)
-# Aquí instalamos todo y luego limpiamos, o bien copiamos de builder node_modules.
-# Para baileys y qrcode-terminal necesitamos todas las dependencies
+# Copiamos los archivos de dependencias
+COPY ["Prueba Whatsapp/package.json", "./"]
+
+# Instalamos dependencias
 RUN npm install --omit=dev
 
 # Copiamos los archivos compilados desde la etapa de construcción

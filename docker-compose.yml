@@ -1,6 +1,8 @@
 services:
   whatsapp-bot:
-    build: .
+    build:
+      context: ..
+      dockerfile: Prueba Whatsapp/Dockerfile
     container_name: whatsapp-bot
     volumes:
       - ./auth_info:/app/auth_info
