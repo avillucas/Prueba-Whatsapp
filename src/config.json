@@ -1,0 +1,9 @@
+{
+  "interface": "command",
+  "inputAdapter": "file",
+  "mockupFilePath": "src/mockup.json",
+  "leadsStorage": {
+    "type": "csv",
+    "filePath": "leads.csv"
+  }
+}
