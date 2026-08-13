@@ -6,9 +6,9 @@ echo "Iniciando CLI interactiva del Motor de Decisiones..."
 mkdir -p data
 
 # Construimos la imagen si no existe
-docker-compose build whatsapp-bot
+docker compose build whatsapp-bot
 
 # Ejecutamos un contenedor temporal con la variable de entorno INTERFACE=command
 # Esto anula la configuración del config.json sólo para esta ejecución.
 # --rm asegura que el contenedor temporal se elimine al salir.
-docker-compose run --rm -e INTERFACE=command whatsapp-bot
+docker compose run --rm -e INTERFACE=command whatsapp-bot
