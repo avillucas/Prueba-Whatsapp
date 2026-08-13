@@ -9,8 +9,14 @@ export function saveLead(config: AppConfig, userId: string, key: string, value: 
     }
 
     const filePath = path.resolve(process.cwd(), config.leadsStorage.filePath);
+    const dirPath = path.dirname(filePath);
     const date = new Date().toISOString();
     
+    // Si el directorio no existe, lo creamos
+    if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+    }
+
     // Si el archivo no existe, creamos la cabecera
     if (!fs.existsSync(filePath)) {
         fs.writeFileSync(filePath, 'Date,UserID,Key,Value\n', 'utf-8');

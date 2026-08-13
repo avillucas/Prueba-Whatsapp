@@ -13,19 +13,26 @@ export interface AppConfig {
 
 export function loadConfig(): AppConfig {
     const configPath = path.resolve(process.cwd(), 'src/config.json');
+    let config: AppConfig;
     try {
         const fileContent = fs.readFileSync(configPath, 'utf-8');
-        return JSON.parse(fileContent) as AppConfig;
+        config = JSON.parse(fileContent) as AppConfig;
     } catch (error) {
         console.error("Error al cargar la configuración. Usando valores por defecto.");
-        return {
+        config = {
             interface: 'command',
             inputAdapter: 'file',
             mockupFilePath: 'src/mockup.json',
             leadsStorage: {
                 type: 'csv',
-                filePath: 'leads.csv'
+                filePath: 'data/leads.csv'
             }
         };
     }
+
+    if (process.env.INTERFACE === 'command' || process.env.INTERFACE === 'baileys') {
+        config.interface = process.env.INTERFACE;
+    }
+
+    return config;
 }

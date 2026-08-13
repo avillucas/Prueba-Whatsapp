@@ -6,6 +6,7 @@ services:
     container_name: whatsapp-bot
     volumes:
       - ./auth_info:/app/auth_info
+      - ./data:/app/data
     restart: unless-stopped
     stdin_open: true # Equivalente a -i (interactivo)
     tty: true        # Equivalente a -t (tty), necesario para qrcode-terminal

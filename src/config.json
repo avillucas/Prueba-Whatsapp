@@ -4,6 +4,6 @@
   "mockupFilePath": "src/mockup.json",
   "leadsStorage": {
     "type": "csv",
-    "filePath": "leads.csv"
+    "filePath": "data/leads.csv"
   }
 }

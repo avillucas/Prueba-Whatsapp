@@ -39,5 +39,9 @@ RUN npm install --omit=dev
 # Copiamos los archivos compilados desde la etapa de construcción
 COPY --from=builder /app/dist ./dist
 
+# Copiamos los archivos JSON de configuración
+COPY ["Prueba Whatsapp/src/config.json", "./src/config.json"]
+COPY ["Prueba Whatsapp/src/mockup.json", "./src/mockup.json"]
+
 # Comando para iniciar la aplicación
 CMD ["npm", "start"]
