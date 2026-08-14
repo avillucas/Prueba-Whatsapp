@@ -1,5 +1,6 @@
 import { LeadRepository } from '../../domain/LeadRepository';
 import { LeadContacto, LeadListaEspera } from '../../domain/Lead';
+import { ErrorHandler } from '../logging/ErrorHandler';
 
 export class CompositeLeadRepository implements LeadRepository {
   private repositories: LeadRepository[];
@@ -11,7 +12,7 @@ export class CompositeLeadRepository implements LeadRepository {
   async saveContacto(sessionId: string, lead: LeadContacto): Promise<void> {
     const promises = this.repositories.map(repo => 
       repo.saveContacto(sessionId, lead).catch(err => {
-        console.error(`[CompositeLeadRepository] Error en repositorio ${repo.constructor.name}:`, err);
+        ErrorHandler.handle('CompositeLeadRepository', err, { repository: repo.constructor.name, sessionId });
       })
     );
     await Promise.all(promises);
@@ -20,7 +21,7 @@ export class CompositeLeadRepository implements LeadRepository {
   async saveListaEspera(sessionId: string, lead: LeadListaEspera): Promise<void> {
     const promises = this.repositories.map(repo => 
       repo.saveListaEspera(sessionId, lead).catch(err => {
-        console.error(`[CompositeLeadRepository] Error en repositorio ${repo.constructor.name}:`, err);
+        ErrorHandler.handle('CompositeLeadRepository', err, { repository: repo.constructor.name, sessionId });
       })
     );
     await Promise.all(promises);

@@ -2,6 +2,7 @@ import * as readline from 'readline';
 import { DecisionEngine, FlowProvider } from "motor-decision";
 import { SessionLeadManager } from "../../application/SessionLeadManager";
 import { LeadRepository } from "../../domain/LeadRepository";
+import { ErrorHandler } from "../logging/ErrorHandler";
 
 export class ConsoleAdapter {
   private engine: DecisionEngine;
@@ -29,7 +30,7 @@ export class ConsoleAdapter {
   private async promptUser() {
     this.rl.question('👤 Tú: ', async (answer) => {
       if (answer.toLowerCase().trim() === 'salir' || answer.toLowerCase().trim() === 'menu') {
-        console.log("\n[Sistema: Guardando datos recolectados (Lead) antes de salir...]");
+        ErrorHandler.logSystem('ConsoleAdapter', `Guardando datos recolectados (Lead) antes de salir (${this.sessionId})`);
         await this.leadManager.finalizeSession(this.sessionId);
         console.log("\n¡Hasta luego! 👋\n");
         this.rl.close();
@@ -40,7 +41,7 @@ export class ConsoleAdapter {
       if (currentNode.extractData) {
         const validationError = this.leadManager.validateField(currentNode.extractData, answer.trim());
         if (validationError) {
-          console.log(`\n⚠️ [Sistema: Error de validación - ${validationError}]`);
+          ErrorHandler.logSystem('ConsoleAdapter', `Error de validación: ${validationError}`);
           this.printBot(currentNode.text);
           this.promptUser();
           return;
@@ -51,23 +52,21 @@ export class ConsoleAdapter {
       
       if (nextNode) {
         if (extractedData) {
-          console.log(`\n✅ [Sistema: Dato extraído: { clave: '${extractedData.key}', valor: '${extractedData.value}' }]`);
-          // Guardamos el dato temporalmente en el manejador
+          ErrorHandler.logSystem('ConsoleAdapter', `Dato extraído: { clave: '${extractedData.key}', valor: '${extractedData.value}' }`);
           this.leadManager.addData(this.sessionId, extractedData.key, extractedData.value);
         }
         
         if (nextNode.extractData) {
-          console.log(`\n[Sistema: Dato extraído esperado en el próximo paso -> '${nextNode.extractData}']`);
+          ErrorHandler.logSystem('ConsoleAdapter', `Dato extraído esperado en el próximo paso: '${nextNode.extractData}'`);
         }
         this.printBot(nextNode.text);
 
-        // Si el próximo nodo es un cierre natural, guardamos el lead.
         if (nextNode.id.includes("FIN") || nextNode.id.includes("CIERRE")) {
-           console.log("\n[Sistema: Fin de flujo detectado. Guardando el Lead...]");
+           ErrorHandler.logSystem('ConsoleAdapter', `Fin de flujo detectado (${this.sessionId}). Guardando el Lead.`);
            await this.leadManager.finalizeSession(this.sessionId);
         }
       } else {
-        console.log(`\n❌ [Sistema: Error - ${error}]`);
+        ErrorHandler.handle('ConsoleAdapter', new Error(`Opción no válida: ${error}`));
         this.printBot(this.engine.getCurrentNode().text);
       }
 
@@ -83,7 +82,7 @@ export class ConsoleAdapter {
 
     const currentNode = this.engine.getCurrentNode();
     if (currentNode.extractData) {
-      console.log(`[Sistema: Dato extraído esperado en el próximo paso -> '${currentNode.extractData}']`);
+      ErrorHandler.logSystem('ConsoleAdapter', `Dato extraído esperado en el próximo paso: '${currentNode.extractData}'`);
     }
     this.printBot(currentNode.text);
 

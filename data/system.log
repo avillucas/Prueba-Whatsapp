@@ -1,0 +1,76 @@
+[2026-08-14T04:33:31.763Z] [WhatsAppAdapter] INFO: Conexión establecida con éxito.
+[2026-08-14T04:33:31.763Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-14T04:33:31.764Z] [WhatsAppAdapter] INFO: Conexión cerrada. Reconectando: false
+[2026-08-14T04:33:31.764Z] [WhatsAppAdapter] INFO: Sesión deslogueada. Borra la carpeta auth_info para escaneo de nuevo QR.
+[2026-08-14T04:33:31.767Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-14T04:33:31.767Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-14T04:33:31.770Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-14T04:33:31.771Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-14T04:33:31.771Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786682011738). Guardando el Lead.
+[2026-08-14T04:33:31.772Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786682011738)
+[2026-08-14T04:33:31.772Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Hola"
+[2026-08-14T04:33:31.775Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204878_f5d08d_mssgc7en para 5491135204878@s.whatsapp.net
+[2026-08-14T04:33:31.777Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204878@s.whatsapp.net
+[2026-08-14T04:33:31.778Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "A"
+[2026-08-14T04:33:31.778Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-14T04:33:31.779Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Lucas Avila"
+[2026-08-14T04:33:31.779Z] [WhatsAppAdapter] INFO: Auto-completando 'Telefono_WhatsApp' para 5491135204878@s.whatsapp.net con valor: "5491135204878"
+[2026-08-14T04:33:31.780Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: FIN)
+[2026-08-14T04:33:31.780Z] [WhatsAppAdapter] INFO: Fin de flujo alcanzado para 5491135204878_f5d08d_mssgc7en. Guardando Lead...
+[2026-08-14T04:33:31.783Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "Hola"
+[2026-08-14T04:33:31.784Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204879_f5d08d_mssgc7ew para 5491135204879@s.whatsapp.net
+[2026-08-14T04:33:31.784Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204879@s.whatsapp.net
+[2026-08-14T04:33:31.784Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "A"
+[2026-08-14T04:33:31.784Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204879@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-14T04:33:31.784Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "123"
+[2026-08-14T04:33:31.784Z] [WhatsAppAdapter] INFO: Validación fallida para 5491135204879@s.whatsapp.net (Campo: Nombre_y_Apellido): "123"
+[2026-08-14T04:33:31.786Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-14T04:33:31.787Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786682011782)
+[2026-08-14T04:33:31.788Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "Hola"
+[2026-08-14T04:33:31.789Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204880_f5d08d_mssgc7f1 para 5491135204880@s.whatsapp.net
+[2026-08-14T04:33:31.789Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204880@s.whatsapp.net
+[2026-08-14T04:33:31.790Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "salir"
+[2026-08-14T04:33:31.790Z] [WhatsAppAdapter] INFO: Sesión finalizada manualmente por usuario 5491135204880@s.whatsapp.net
+[2026-08-14T04:33:31.792Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-14T04:33:32.173Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-14T04:33:32.172Z","s1","Test","","",""]
+[2026-08-14T04:33:32.174Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-14T04:33:32.174Z","s2","Test","","",""]
+[2026-08-14T04:33:32.185Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-14T04:33:32.222Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-14T15:50:03.386Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-14T15:50:03.391Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-14T15:50:03.391Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-14T15:50:03.393Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-14T15:50:03.395Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-14T15:50:03.395Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786722603359). Guardando el Lead.
+[2026-08-14T15:50:03.400Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786722603359)
+[2026-08-14T15:50:03.425Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-14T15:50:03.426Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786722603420)
+[2026-08-14T15:50:03.435Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-14T15:50:03.454Z] [WhatsAppAdapter] INFO: Conexión establecida con éxito.
+[2026-08-14T15:50:03.459Z] [WhatsAppAdapter] INFO: Conexión cerrada. Reconectando: false
+[2026-08-14T15:50:03.460Z] [WhatsAppAdapter] INFO: Sesión deslogueada. Borra la carpeta auth_info para escaneo de nuevo QR.
+[2026-08-14T15:50:03.475Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Hola"
+[2026-08-14T15:50:03.478Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-14T15:50:03.477Z","s1","Test","","",""]
+[2026-08-14T15:50:03.479Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-14T15:50:03.479Z","s2","Test","","",""]
+[2026-08-14T15:50:03.480Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204878_41ab22_mst4i860 para 5491135204878@s.whatsapp.net
+[2026-08-14T15:50:03.482Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204878@s.whatsapp.net
+[2026-08-14T15:50:03.483Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "A"
+[2026-08-14T15:50:03.483Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-14T15:50:03.484Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Lucas Avila"
+[2026-08-14T15:50:03.485Z] [WhatsAppAdapter] INFO: Auto-completando 'Telefono_WhatsApp' para 5491135204878@s.whatsapp.net con valor: "5491135204878"
+[2026-08-14T15:50:03.485Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: FIN)
+[2026-08-14T15:50:03.485Z] [WhatsAppAdapter] INFO: Fin de flujo alcanzado para 5491135204878_41ab22_mst4i860. Guardando Lead...
+[2026-08-14T15:50:03.490Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "Hola"
+[2026-08-14T15:50:03.490Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204879_41ab22_mst4i86a para 5491135204879@s.whatsapp.net
+[2026-08-14T15:50:03.490Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204879@s.whatsapp.net
+[2026-08-14T15:50:03.491Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "A"
+[2026-08-14T15:50:03.491Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204879@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-14T15:50:03.491Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "123"
+[2026-08-14T15:50:03.491Z] [WhatsAppAdapter] INFO: Validación fallida para 5491135204879@s.whatsapp.net (Campo: Nombre_y_Apellido): "123"
+[2026-08-14T15:50:03.496Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "Hola"
+[2026-08-14T15:50:03.497Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204880_41ab22_mst4i86h para 5491135204880@s.whatsapp.net
+[2026-08-14T15:50:03.498Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204880@s.whatsapp.net
+[2026-08-14T15:50:03.498Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "salir"
+[2026-08-14T15:50:03.498Z] [WhatsAppAdapter] INFO: Sesión finalizada manualmente por usuario 5491135204880@s.whatsapp.net
+[2026-08-14T15:50:04.198Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-14T15:50:04.256Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)

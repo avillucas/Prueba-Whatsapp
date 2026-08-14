@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "Iniciando suite de tests en entorno Docker..."
+
+# Asegurarse de que el directorio data exista para el montaje del volumen
+mkdir -p data
+
+# Construir la imagen de test usando el target builder
+docker compose build test
+
+# Ejecutar el contenedor de test y eliminarlo al finalizar
+docker compose run --rm test "$@"

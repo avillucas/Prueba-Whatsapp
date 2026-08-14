@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 import * as https from 'https';
+import { ErrorHandler } from '../logging/ErrorHandler';
 
 export interface GoogleSheetsAdapterConfig {
   spreadsheetId?: string;
@@ -117,7 +118,7 @@ export class GoogleSheetsAdapter {
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
           if (res.statusCode && res.statusCode >= 200 && res.statusCode < 400) {
-            console.log(`[GoogleSheetsAdapter] Fila agregada via Webhook en '${sheetName}'`);
+            ErrorHandler.logSystem('GoogleSheetsAdapter', `Fila agregada via Webhook en '${sheetName}'`);
             resolve(true);
           } else {
             reject(new Error(`Error Webhook (${res.statusCode}): ${data}`));
@@ -139,7 +140,7 @@ export class GoogleSheetsAdapter {
       try {
         return await this.appendViaWebhook(sheetName, values);
       } catch (error) {
-        console.error(`[GoogleSheetsAdapter] Error al enviar via Webhook:`, error);
+        ErrorHandler.handle('GoogleSheetsAdapter', error, { sheetName, action: 'appendViaWebhook' });
         throw error;
       }
     }
@@ -167,10 +168,10 @@ export class GoogleSheetsAdapter {
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
               if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-                console.log(`[GoogleSheetsAdapter] Fila guardada exitosamente en Google Sheets (${sheetName})`);
+                ErrorHandler.logSystem('GoogleSheetsAdapter', `Fila guardada exitosamente en Google Sheets (${sheetName})`);
                 resolve(true);
               } else {
-                console.error(`[GoogleSheetsAdapter] Error HTTP ${res.statusCode}: ${data}`);
+                ErrorHandler.handle('GoogleSheetsAdapter', new Error(`Google API Error (${res.statusCode}): ${data}`));
                 reject(new Error(`Google API Error (${res.statusCode}): ${data}`));
               }
             });
@@ -181,13 +182,12 @@ export class GoogleSheetsAdapter {
           req.end();
         });
       } catch (error) {
-        console.error(`[GoogleSheetsAdapter] Error al comunicarse con la API de Google Sheets:`, error);
+        ErrorHandler.handle('GoogleSheetsAdapter', error, { sheetName, action: 'appendRow' });
         throw error;
       }
     }
 
-    console.warn(`[GoogleSheetsAdapter] ⚠️ No hay credenciales completas de Google Sheets ni Webhook URL.`);
-    console.log(`[GoogleSheetsAdapter] [DRY RUN] Hoja: '${sheetName}' -> Valores:`, values);
+    ErrorHandler.logSystem('GoogleSheetsAdapter', `DRY RUN: Hoja '${sheetName}' -> Valores: ${JSON.stringify(values)}`);
     return false;
   }
 

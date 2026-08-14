@@ -8,8 +8,8 @@ WORKDIR /app
 # Copiamos motor-decision (necesario para la dependencia local file:../motorDecision)
 COPY motorDecision /motorDecision
 
-# Copiamos los archivos de dependencias
-COPY ["Prueba Whatsapp/package.json", "Prueba Whatsapp/tsconfig.json", "./"]
+# Copiamos los archivos de dependencias y configuración de test
+COPY ["Prueba Whatsapp/package.json", "Prueba Whatsapp/tsconfig.json", "Prueba Whatsapp/jest.config.js", "./"]
 
 # Instalamos dependencias
 RUN npm install

@@ -4,10 +4,30 @@ services:
       context: ..
       dockerfile: Prueba Whatsapp/Dockerfile
     container_name: whatsapp-bot
+    env_file:
+      - .env
     volumes:
       - ./auth_info:/app/auth_info
       - ./data:/app/data
       - ./flows:/app/flows
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
     stdin_open: true # Equivalente a -i (interactivo)
     tty: true        # Equivalente a -t (tty), necesario para qrcode-terminal
+
+  test:
+    build:
+      context: ..
+      dockerfile: Prueba Whatsapp/Dockerfile
+      target: builder
+    container_name: whatsapp-bot-test
+    volumes:
+      - ./src:/app/src
+      - ./flows:/app/flows
+      - ./data:/app/data
+    command: npm test
+
