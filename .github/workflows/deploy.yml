@@ -70,7 +70,7 @@ jobs:
             echo "🚀 Iniciando despliegue en Google Cloud..."
             cd ~/Prueba-Whatsapp || cd ~/app
             git pull origin main
-            docker compose build whatsapp-bot
-            docker compose up -d --remove-orphans
+            chmod +x ssh/deploy
+            ./ssh/deploy
             echo "✅ Despliegue completado con éxito."
 

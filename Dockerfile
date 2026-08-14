@@ -5,19 +5,20 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# Copiamos la librería motorDecision local si existe en el proyecto
+# 1. Copiamos motorDecision y lo compilamos primero para generar los tipos y dist
 COPY motorDecision ./motorDecision
+RUN cd ./motorDecision && npm install && npm run build
 
-# Copiamos los archivos de dependencias
+# 2. Copiamos los archivos de configuración y dependencias de la app principal
 COPY package.json tsconfig.json jest.config.js ./
 
-# Instalamos dependencias (incluyendo devDependencies para compilar)
+# 3. Instalamos dependencias de la app principal
 RUN npm install
 
-# Copiamos el código fuente
+# 4. Copiamos el código fuente de la app principal
 COPY src ./src
 
-# Compilamos TypeScript a JavaScript
+# 5. Compilamos TypeScript a JavaScript
 RUN npm run build
 
 # Etapa de producción
@@ -27,8 +28,8 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# Copiamos la librería motorDecision local
-COPY motorDecision ./motorDecision
+# Copiamos motorDecision compilado desde la etapa de construcción
+COPY --from=builder /app/motorDecision ./motorDecision
 
 # Copiamos package.json
 COPY package.json ./

@@ -1,0 +1,33 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Iniciando despliegue de producción del WhatsApp Bot (Docker CLI)..."
+
+# Asegurar que existan los directorios requeridos por los volúmenes
+mkdir -p auth_info data flows
+
+# 1. Construir la imagen de producción
+echo "📦 Construyendo la imagen Docker de producción..."
+docker build -t whatsapp-bot:latest .
+
+# 2. Detener y eliminar contenedor anterior si existe
+if [ "$(docker ps -aq -f name=whatsapp-bot)" ]; then
+    echo "🛑 Deteniendo y removiendo contenedor anterior..."
+    docker stop whatsapp-bot 2>/dev/null || true
+    docker rm whatsapp-bot 2>/dev/null || true
+fi
+
+# 3. Ejecutar contenedor de producción con Docker
+echo "🚀 Levantando contenedor de producción en segundo plano..."
+docker run -d \
+  --name whatsapp-bot \
+  --restart unless-stopped \
+  --env-file .env \
+  -v "$(pwd)/auth_info:/app/auth_info" \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/flows:/app/flows" \
+  -it \
+  whatsapp-bot:latest
+
+echo "✅ Despliegue de producción completado con éxito."
+echo "💡 Para ver los logs y escanear el QR ejecuta: docker logs -f whatsapp-bot"
