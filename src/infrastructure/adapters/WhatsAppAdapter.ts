@@ -24,14 +24,14 @@ export class WhatsAppAdapter {
   }
 
   async start() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
     
     // Configuramos pino logger para evitar que ensucie mucho la consola
     const logger = pino({ level: 'silent' }) as any;
 
     const sock = makeWASocket({
       auth: state,
-      printQRInTerminal: true,
+      printQRInTerminal: false,
       logger
     });
 
@@ -41,7 +41,8 @@ export class WhatsAppAdapter {
       const { connection, lastDisconnect, qr } = update;
       
       if (qr) {
-        console.log('\n📱 Escanea el código QR superior con tu WhatsApp para conectar el Bot.\n');
+        console.log('\n📱 Escanea el siguiente código QR con tu WhatsApp para conectar el Bot:\n');
+        qrcode.generate(qr, { small: true });
       }
 
       if (connection === 'close') {
@@ -59,18 +60,37 @@ export class WhatsAppAdapter {
     });
 
     sock.ev.on('messages.upsert', async (m: any) => {
+      // Solo procesamos mensajes nuevos recibidos en tiempo real ('notify')
+      if (m.type !== 'notify') return;
+
       const msg = m.messages[0];
       
-      // Ignoramos mensajes que enviamos nosotros mismos u otros estados
-      if (!msg.message || msg.key.fromMe || !msg.key.remoteJid) return;
+      // Ignoramos mensajes sin contenido, enviados por nosotros mismos o provenientes de grupos/estados
+      if (!msg || !msg.message || msg.key.fromMe || !msg.key.remoteJid) return;
 
       const remoteJid = msg.key.remoteJid;
-      // Extraemos el texto del mensaje dependiendo de si es texto plano o un mensaje extendido
-      const text = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
-      
+
+      // Descartar grupos, listas de difusión y estados
+      if (remoteJid.endsWith('@g.us') || remoteJid.endsWith('@newsletter') || remoteJid === 'status@broadcast') {
+        return;
+      }
+
+      // Extraer el texto del mensaje desenvolviendo mensajes efímeros si existen
+      const messageContent = msg.message.ephemeralMessage?.message || msg.message;
+      const text = messageContent.conversation || 
+                   messageContent.extendedTextMessage?.text || 
+                   messageContent.buttonsResponseMessage?.selectedButtonId || 
+                   "";
+
       if (!text.trim()) return;
 
-      await this.processMessage(sock, remoteJid, text.trim());
+      console.log(`📩 Mensaje recibido de ${remoteJid}: "${text.trim()}"`);
+
+      try {
+        await this.processMessage(sock, remoteJid, text.trim());
+      } catch (err) {
+        console.error(`❌ Error procesando mensaje de ${remoteJid}:`, err);
+      }
     });
   }
 
@@ -78,15 +98,17 @@ export class WhatsAppAdapter {
     // 1. Obtener o crear la sesión activa para este usuario
     if (!this.activeSessions.has(remoteJid)) {
       const sessionId = SessionIdGenerator.generate(remoteJid);
-      console.log(`[+] Nueva sesión iniciada: ${sessionId}`);
+      console.log(`[+] Nueva sesión iniciada: ${sessionId} para ${remoteJid}`);
       
+      const engine = new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId());
       this.activeSessions.set(remoteJid, {
         sessionId: sessionId,
-        engine: new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId())
+        engine: engine
       });
 
-      // Enviar el mensaje inicial sin necesidad de que el usuario haya acertado una opción
-      const initialNode = this.activeSessions.get(remoteJid)!.engine.getCurrentNode();
+      // Enviar el mensaje inicial al usuario
+      const initialNode = engine.getCurrentNode();
+      console.log(`📤 Enviando menú inicial a ${remoteJid}...`);
       await sock.sendMessage(remoteJid, { text: initialNode.text });
       return;
     }
@@ -111,6 +133,7 @@ export class WhatsAppAdapter {
       }
 
       // Enviar la respuesta del bot
+      console.log(`📤 Enviando respuesta a ${remoteJid} (Nodo: ${nextNode.id})...`);
       await sock.sendMessage(remoteJid, { text: nextNode.text });
 
       // 3. Revisar si el flujo ha terminado
@@ -122,6 +145,7 @@ export class WhatsAppAdapter {
     } else {
       // Si hubo un error (opción inválida), volver a enviar el texto del nodo actual
       const currentNode = session.engine.getCurrentNode();
+      console.log(`⚠️ Opción no válida enviada por ${remoteJid}: "${text}". Reenviando nodo actual...`);
       await sock.sendMessage(remoteJid, { text: `Opción no válida.\n\n${currentNode.text}` });
     }
   }
