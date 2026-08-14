@@ -1,5 +1,5 @@
-import { Email, Telefono, LeadContacto, LeadListaEspera } from "./Lead";
-import { LeadRepository } from "./LeadRepository";
+import { Email, Telefono, LeadContacto, LeadListaEspera } from "../domain/Lead";
+import { LeadRepository } from "../domain/LeadRepository";
 
 export class SessionLeadManager {
   // Guardamos un diccionario con los datos temporales extraídos de cada sesión

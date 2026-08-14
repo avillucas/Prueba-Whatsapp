@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { LeadRepository } from './LeadRepository';
-import { LeadContacto, LeadListaEspera } from './Lead';
+import { LeadRepository } from '../../domain/LeadRepository';
+import { LeadContacto, LeadListaEspera } from '../../domain/Lead';
 
 export class CsvLeadRepository implements LeadRepository {
   private contactoPath: string;

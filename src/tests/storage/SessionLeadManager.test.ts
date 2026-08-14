@@ -1,6 +1,6 @@
-import { SessionLeadManager } from "./SessionLeadManager";
-import { LeadRepository } from "./LeadRepository";
-import { LeadContacto, LeadListaEspera } from "./Lead";
+import { SessionLeadManager } from "../../application/SessionLeadManager";
+import { LeadRepository } from "../../domain/LeadRepository";
+import { LeadContacto, LeadListaEspera } from "../../domain/Lead";
 
 // Mock del repositorio para evitar escribir en disco durante los tests
 class MockLeadRepository implements LeadRepository {

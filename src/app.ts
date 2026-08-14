@@ -1,8 +1,8 @@
-import { loadConfig } from './config';
+import { loadConfig } from './config/config';
 import { JsonFlowAdapter } from 'motor-decision';
-import { ConsoleAdapter } from './interfaces/ConsoleAdapter';
-import { WhatsAppAdapter } from './interfaces/WhatsAppAdapter';
-import { CsvLeadRepository } from './storage/CsvLeadRepository';
+import { ConsoleAdapter } from './infrastructure/adapters/ConsoleAdapter';
+import { WhatsAppAdapter } from './infrastructure/adapters/WhatsAppAdapter';
+import { CsvLeadRepository } from './infrastructure/repositories/CsvLeadRepository';
 
 async function main() {
     const config = loadConfig();

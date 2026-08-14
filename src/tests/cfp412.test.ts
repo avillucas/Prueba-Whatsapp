@@ -1,5 +1,5 @@
-import { DecisionEngine } from "./DecisionEngine";
-import { cfp412Mockup } from "../data/cfp412Mockup";
+import { DecisionEngine } from "motor-decision";
+import { cfp412Mockup } from "./cfp412Mockup";
 
 describe("CFP 412 Decision Engine Flow", () => {
   let engine: DecisionEngine;

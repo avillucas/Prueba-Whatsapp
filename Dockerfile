@@ -40,9 +40,8 @@ RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Copiamos los archivos JSON de configuración
-COPY ["Prueba Whatsapp/src/config.json", "./src/config.json"]
-COPY ["Prueba Whatsapp/src/mockup.json", "./src/mockup.json"]
-COPY ["Prueba Whatsapp/src/flow_cfp412.json", "./src/flow_cfp412.json"]
+COPY ["Prueba Whatsapp/src/config/config.json", "./src/config/config.json"]
+COPY ["Prueba Whatsapp/src/flows/", "./src/flows/"]
 
 # Comando para iniciar la aplicación
 CMD ["npm", "start"]

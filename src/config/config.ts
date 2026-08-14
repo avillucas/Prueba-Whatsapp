@@ -12,7 +12,7 @@ export interface AppConfig {
 }
 
 export function loadConfig(): AppConfig {
-    const configPath = path.resolve(process.cwd(), 'src/config.json');
+    const configPath = path.resolve(process.cwd(), 'src/config/config.json');
     let config: AppConfig;
     try {
         const fileContent = fs.readFileSync(configPath, 'utf-8');
@@ -22,7 +22,7 @@ export function loadConfig(): AppConfig {
         config = {
             interface: 'command',
             inputAdapter: 'file',
-            mockupFilePath: 'src/mockup.json',
+            mockupFilePath: 'src/flows/flow_cfp412.json',
             leadsStorage: {
                 type: 'csv',
                 filePath: 'data/leads.csv'

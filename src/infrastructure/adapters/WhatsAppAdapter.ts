@@ -2,11 +2,10 @@ import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeys
 import * as qrcode from 'qrcode-terminal';
 import pino from 'pino';
 import { Boom } from '@hapi/boom';
-import { DecisionEngine } from '../domain/DecisionEngine';
-import { SessionLeadManager } from './SessionLeadManager';
-import { SessionIdGenerator } from './SessionIdGenerator';
-import { FlowProvider } from '../domain/FlowProvider';
-import { LeadRepository } from './LeadRepository';
+import { DecisionEngine, FlowProvider } from 'motor-decision';
+import { SessionLeadManager } from '../../application/SessionLeadManager';
+import { SessionIdGenerator } from '../utils/SessionIdGenerator';
+import { LeadRepository } from '../../domain/LeadRepository';
 
 // Interfaz para mantener el estado de la conversación activa por usuario
 interface ActiveSession {

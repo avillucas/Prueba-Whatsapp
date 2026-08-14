@@ -1,4 +1,4 @@
-import { DecisionNode } from "../domain/DecisionEngine";
+import { DecisionNode } from "motor-decision";
 
 export const cfp412Mockup: DecisionNode[] = [
   {

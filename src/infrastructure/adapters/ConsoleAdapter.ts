@@ -1,7 +1,7 @@
 import * as readline from 'readline';
 import { DecisionEngine, FlowProvider } from "motor-decision";
-import { SessionLeadManager } from "../storage/SessionLeadManager";
-import { LeadRepository } from "../storage/LeadRepository";
+import { SessionLeadManager } from "../../application/SessionLeadManager";
+import { LeadRepository } from "../../domain/LeadRepository";
 
 export class ConsoleAdapter {
   private engine: DecisionEngine;
