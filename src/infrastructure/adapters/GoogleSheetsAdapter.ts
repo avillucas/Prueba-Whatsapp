@@ -1,0 +1,239 @@
+import * as crypto from 'crypto';
+import * as https from 'https';
+
+export interface GoogleSheetsAdapterConfig {
+  spreadsheetId?: string;
+  clientEmail?: string;
+  privateKey?: string;
+  webhookUrl?: string; // Soporte para Google Apps Script Web App Endpoint
+}
+
+export class GoogleSheetsAdapter {
+  private spreadsheetId: string;
+  private clientEmail: string;
+  private privateKey: string;
+  private webhookUrl: string;
+
+  constructor(config: GoogleSheetsAdapterConfig = {}) {
+    this.spreadsheetId = config.spreadsheetId || process.env.GOOGLE_SPREADSHEET_ID || '';
+    this.clientEmail = config.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
+    this.privateKey = (config.privateKey || process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+    this.webhookUrl = config.webhookUrl || process.env.GOOGLE_SHEETS_WEBHOOK_URL || '';
+  }
+
+  /**
+   * Genera un token JWT firmado para autenticación RS256 con la API de Google.
+   */
+  private generateJwtToken(): string {
+    const header = {
+      alg: 'RS256',
+      typ: 'JWT'
+    };
+
+    const now = Math.floor(Date.now() / 1000);
+    const claimSet = {
+      iss: this.clientEmail,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now
+    };
+
+    const base64UrlEncode = (obj: object): string => {
+      return Buffer.from(JSON.stringify(obj))
+        .toString('base64')
+        .replace(/=/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_');
+    };
+
+    const encodedHeader = base64UrlEncode(header);
+    const encodedClaimSet = base64UrlEncode(claimSet);
+    const signatureInput = `${encodedHeader}.${encodedClaimSet}`;
+
+    const signer = crypto.createSign('RSA-SHA256');
+    signer.update(signatureInput);
+    const signature = signer.sign(this.privateKey, 'base64')
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    return `${signatureInput}.${signature}`;
+  }
+
+  /**
+   * Obtiene un Access Token de la API OAuth2 de Google usando el JWT de la Service Account.
+   */
+  private async getAccessToken(): Promise<string> {
+    const jwtToken = this.generateJwtToken();
+    const postData = `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwtToken}`;
+
+    return new Promise((resolve, reject) => {
+      const req = https.request('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            try {
+              const json = JSON.parse(data);
+              resolve(json.access_token);
+            } catch (err) {
+              reject(new Error(`Error al parsear respuesta OAuth: ${err}`));
+            }
+          } else {
+            reject(new Error(`Error OAuth (${res.statusCode}): ${data}`));
+          }
+        });
+      });
+
+      req.on('error', (err) => reject(err));
+      req.write(postData);
+      req.end();
+    });
+  }
+
+  /**
+   * Envía una fila a Google Sheets via Webhook (Google Apps Script)
+   */
+  private async appendViaWebhook(sheetName: string, values: string[]): Promise<boolean> {
+    const payload = JSON.stringify({ sheetName, values, action: 'append' });
+    const url = new URL(this.webhookUrl);
+
+    return new Promise((resolve, reject) => {
+      const req = https.request(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 400) {
+            console.log(`[GoogleSheetsAdapter] Fila agregada via Webhook en '${sheetName}'`);
+            resolve(true);
+          } else {
+            reject(new Error(`Error Webhook (${res.statusCode}): ${data}`));
+          }
+        });
+      });
+
+      req.on('error', (err) => reject(err));
+      req.write(payload);
+      req.end();
+    });
+  }
+
+  /**
+   * Agrega una fila de datos a la pestaña indicada en Google Sheets (Escribir).
+   */
+  public async appendRow(sheetName: string, values: string[]): Promise<boolean> {
+    if (this.webhookUrl) {
+      try {
+        return await this.appendViaWebhook(sheetName, values);
+      } catch (error) {
+        console.error(`[GoogleSheetsAdapter] Error al enviar via Webhook:`, error);
+        throw error;
+      }
+    }
+
+    if (this.spreadsheetId && this.clientEmail && this.privateKey) {
+      try {
+        const accessToken = await this.getAccessToken();
+        const range = `${encodeURIComponent(sheetName)}!A:A`;
+        const postData = JSON.stringify({
+          values: [values]
+        });
+
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${range}:append?valueInputOption=USER_ENTERED`;
+
+        return new Promise((resolve, reject) => {
+          const req = https.request(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+              'Content-Length': Buffer.byteLength(postData)
+            }
+          }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+              if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                console.log(`[GoogleSheetsAdapter] Fila guardada exitosamente en Google Sheets (${sheetName})`);
+                resolve(true);
+              } else {
+                console.error(`[GoogleSheetsAdapter] Error HTTP ${res.statusCode}: ${data}`);
+                reject(new Error(`Google API Error (${res.statusCode}): ${data}`));
+              }
+            });
+          });
+
+          req.on('error', (err) => reject(err));
+          req.write(postData);
+          req.end();
+        });
+      } catch (error) {
+        console.error(`[GoogleSheetsAdapter] Error al comunicarse con la API de Google Sheets:`, error);
+        throw error;
+      }
+    }
+
+    console.warn(`[GoogleSheetsAdapter] ⚠️ No hay credenciales completas de Google Sheets ni Webhook URL.`);
+    console.log(`[GoogleSheetsAdapter] [DRY RUN] Hoja: '${sheetName}' -> Valores:`, values);
+    return false;
+  }
+
+  /**
+   * Lee las filas de una pestaña indicada de la hoja de Google (Leer).
+   */
+  public async readRows(sheetName: string, range: string = 'A:Z'): Promise<string[][]> {
+    if (!this.spreadsheetId || !this.clientEmail || !this.privateKey) {
+      throw new Error('[GoogleSheetsAdapter] Para leer sobre la hoja de Google se requiere spreadsheetId, clientEmail y privateKey.');
+    }
+
+    try {
+      const accessToken = await this.getAccessToken();
+      const fullRange = `${encodeURIComponent(sheetName)}!${range}`;
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.spreadsheetId}/values/${fullRange}?majorDimension=ROWS`;
+
+      return new Promise((resolve, reject) => {
+        const req = https.request(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json'
+          }
+        }, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              try {
+                const json = JSON.parse(data);
+                resolve(json.values || []);
+              } catch (err) {
+                reject(new Error(`Error parseando filas de Google Sheets: ${err}`));
+              }
+            } else {
+              reject(new Error(`Google API Error (${res.statusCode}): ${data}`));
+            }
+          });
+        });
+
+        req.on('error', (err) => reject(err));
+        req.end();
+      });
+    } catch (error) {
+      console.error(`[GoogleSheetsAdapter] Error al leer desde la API de Google Sheets:`, error);
+      throw error;
+    }
+  }
+}

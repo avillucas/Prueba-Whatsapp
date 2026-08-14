@@ -71,8 +71,19 @@
   },
   {
     "id": "RESP_C_2",
-    "text": "¡Gracias! Ahora, por favor indícanos un número de WhatsApp o email de contacto al que podamos escribirte:",
-    "extractData": "Telefono_WhatsApp_Email",
+    "text": "¡Gracias! Por favor, indícanos un número de teléfono de WhatsApp de contacto:",
+    "extractData": "Telefono_WhatsApp",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "RESP_C_2_EMAIL"
+      }
+    ]
+  },
+  {
+    "id": "RESP_C_2_EMAIL",
+    "text": "¡Perfecto! Ahora indícanos tu correo electrónico:",
+    "extractData": "Correo_Electronico",
     "options": [
       {
         "match": "*",
@@ -144,8 +155,19 @@
   },
   {
     "id": "RESP_G_2",
-    "text": "¡Gracias! Ahora, por favor indícanos un número de WhatsApp o email de contacto al que podamos escribirte:",
-    "extractData": "Telefono_WhatsApp_Email",
+    "text": "¡Gracias! Por favor, indícanos un número de teléfono de WhatsApp de contacto:",
+    "extractData": "Telefono_WhatsApp",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "RESP_G_2_EMAIL"
+      }
+    ]
+  },
+  {
+    "id": "RESP_G_2_EMAIL",
+    "text": "¡Perfecto! Ahora indícanos tu correo electrónico:",
+    "extractData": "Correo_Electronico",
     "options": [
       {
         "match": "*",

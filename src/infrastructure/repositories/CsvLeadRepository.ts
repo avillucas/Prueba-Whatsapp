@@ -21,7 +21,7 @@ export class CsvLeadRepository implements LeadRepository {
       fs.writeFileSync(this.contactoPath, 'sessionId,nombre,telefono,correoElectronico,mensaje\n', 'utf-8');
     }
     if (!fs.existsSync(this.listaEsperaPath)) {
-      fs.writeFileSync(this.listaEsperaPath, 'sessionId,nombre,telefono,cursoDeInteres\n', 'utf-8');
+      fs.writeFileSync(this.listaEsperaPath, 'sessionId,nombre,telefono,correoElectronico,cursoDeInteres\n', 'utf-8');
     }
   }
 
@@ -51,6 +51,7 @@ export class CsvLeadRepository implements LeadRepository {
       sessionId,
       lead.nombre || '',
       lead.telefono?.numeroCompleto || '',
+      lead.correoElectronico?.valor || '',
       lead.cursoDeInteres || ''
     ].map(val => this.escapeCsv(val)).join(',');
 

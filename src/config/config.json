@@ -4,6 +4,14 @@
   "flowFile": "flow_cfp412.json",
   "leadsStorage": {
     "type": "csv",
-    "filePath": "data/leads.csv"
+    "filePath": "data/leads.csv",
+    "googleSheets": {
+      "spreadsheetId": "",
+      "clientEmail": "",
+      "privateKey": "",
+      "webhookUrl": "",
+      "sheetContactoName": "Contactos",
+      "sheetListaEsperaName": "ListaEspera"
+    }
   }
 }

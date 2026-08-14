@@ -106,6 +106,12 @@ export class WhatsAppAdapter {
         engine: engine
       });
 
+      // Extraer y autocompletar el teléfono proveniente del JID de WhatsApp (ej: 5491135204878@s.whatsapp.net -> 5491135204878)
+      const rawPhone = remoteJid.split('@')[0];
+      this.leadManager.initSession(sessionId, {
+        Telefono_WhatsApp: rawPhone
+      });
+
       // Enviar el mensaje inicial al usuario
       const initialNode = engine.getCurrentNode();
       console.log(`📤 Enviando menú inicial a ${remoteJid}...`);
@@ -123,6 +129,17 @@ export class WhatsAppAdapter {
       return;
     }
 
+    // Validar el dato si el nodo actual espera capturar información específica (ej. teléfono o email)
+    const currentNode = session.engine.getCurrentNode();
+    if (currentNode.extractData) {
+      const validationError = this.leadManager.validateField(currentNode.extractData, text);
+      if (validationError) {
+        console.log(`⚠️ Validación fallida para ${remoteJid} (Campo: ${currentNode.extractData}): "${text}"`);
+        await sock.sendMessage(remoteJid, { text: `⚠️ ${validationError}\n\n${currentNode.text}` });
+        return;
+      }
+    }
+
     // 2. Procesar la respuesta con el motor
     const { nextNode, extractedData, error } = session.engine.processAnswer(text);
 
@@ -132,12 +149,25 @@ export class WhatsAppAdapter {
         this.leadManager.addData(session.sessionId, extractedData.key, extractedData.value);
       }
 
+      let targetNode = nextNode;
+
+      // Autocompletar y auto-avanzar si el nuevo nodo solicita un campo que ya poseemos (ej. teléfono)
+      while (targetNode && targetNode.extractData && this.leadManager.hasValidField(session.sessionId, targetNode.extractData)) {
+        const autoVal = this.leadManager.getSessionData(session.sessionId, targetNode.extractData)!;
+        console.log(`⚡ Auto-completando '${targetNode.extractData}' para ${remoteJid} con valor: "${autoVal}"`);
+        this.leadManager.addData(session.sessionId, targetNode.extractData, autoVal);
+
+        const autoResult = session.engine.processAnswer(autoVal);
+        if (!autoResult.nextNode) break;
+        targetNode = autoResult.nextNode;
+      }
+
       // Enviar la respuesta del bot
-      console.log(`📤 Enviando respuesta a ${remoteJid} (Nodo: ${nextNode.id})...`);
-      await sock.sendMessage(remoteJid, { text: nextNode.text });
+      console.log(`📤 Enviando respuesta a ${remoteJid} (Nodo: ${targetNode.id})...`);
+      await sock.sendMessage(remoteJid, { text: targetNode.text });
 
       // 3. Revisar si el flujo ha terminado
-      if (nextNode.id.includes("FIN") || nextNode.id.includes("CIERRE")) {
+      if (targetNode.id.includes("FIN") || targetNode.id.includes("CIERRE")) {
         console.log(`[!] Fin de flujo para ${session.sessionId}. Guardando Lead...`);
         await this.leadManager.finalizeSession(session.sessionId);
         this.activeSessions.delete(remoteJid);

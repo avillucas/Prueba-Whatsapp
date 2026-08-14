@@ -36,6 +36,17 @@ export class ConsoleAdapter {
         return;
       }
 
+      const currentNode = this.engine.getCurrentNode();
+      if (currentNode.extractData) {
+        const validationError = this.leadManager.validateField(currentNode.extractData, answer.trim());
+        if (validationError) {
+          console.log(`\n⚠️ [Sistema: Error de validación - ${validationError}]`);
+          this.printBot(currentNode.text);
+          this.promptUser();
+          return;
+        }
+      }
+
       const { nextNode, extractedData, error } = this.engine.processAnswer(answer.trim());
       
       if (nextNode) {

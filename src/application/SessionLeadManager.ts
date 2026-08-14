@@ -1,11 +1,44 @@
 import { Email, Telefono, LeadContacto, LeadListaEspera } from "../domain/Lead";
 import { LeadRepository } from "../domain/LeadRepository";
+import { LeadValidator } from "../domain/LeadValidator";
 
 export class SessionLeadManager {
   // Guardamos un diccionario con los datos temporales extraídos de cada sesión
   private sessionData: Map<string, Record<string, string>> = new Map();
 
   constructor(private leadRepository: LeadRepository) {}
+
+  /**
+   * Inicializa la sesión con datos conocidos (ej: teléfono de la conexión de WhatsApp).
+   */
+  initSession(sessionId: string, initialData?: Record<string, string>) {
+    if (!this.sessionData.has(sessionId)) {
+      this.sessionData.set(sessionId, {});
+    }
+    if (initialData) {
+      const data = this.sessionData.get(sessionId)!;
+      for (const [key, val] of Object.entries(initialData)) {
+        if (val && this.validateField(key, val) === null) {
+          data[key] = val;
+        }
+      }
+    }
+  }
+
+  /**
+   * Devuelve un dato previamente almacenado en la sesión.
+   */
+  getSessionData(sessionId: string, key: string): string | undefined {
+    return this.sessionData.get(sessionId)?.[key];
+  }
+
+  /**
+   * Verifica si un campo ya posee un valor válido almacenado en la sesión.
+   */
+  hasValidField(sessionId: string, key: string): boolean {
+    const val = this.getSessionData(sessionId, key);
+    return val !== undefined && this.validateField(key, val) === null;
+  }
 
   /**
    * Almacena un dato extraído temporalmente para una sesión.
@@ -19,43 +52,32 @@ export class SessionLeadManager {
   }
 
   /**
-   * Sanitiza e intenta parsear un teléfono a partir de texto libre.
+   * Valida un campo invocando la lógica de validación de Dominio.
    */
-  private parseTelefono(text: string): Telefono | undefined {
-    const numbers = text.replace(/\D/g, '');
-    if (numbers.length >= 6) {
-      try {
-        // Heurística simple: primeros 2-3 dígitos como código de área
-        // Si empieza con 54 (código país Argentina):
-        if (numbers.startsWith('54')) {
-          return new Telefono('54', numbers.slice(2));
-        }
-        // Si empieza con 11 (CABA/GBA):
-        if (numbers.startsWith('11')) {
-          return new Telefono('11', numbers.slice(2));
-        }
-        // Fallback genérico: 3 dígitos de área
-        return new Telefono(numbers.slice(0, 3), numbers.slice(3));
-      } catch (e) {
-        return undefined; // Si la validación del VO falla, retornamos undefined
-      }
-    }
-    return undefined;
+  validateField(key: string, value: string): string | null {
+    return LeadValidator.validar(key, value);
   }
 
   /**
-   * Sanitiza e intenta parsear un correo electrónico a partir de texto libre.
+   * Delegado al Value Object Telefono del Dominio.
+   */
+  private parseTelefono(text: string): Telefono | undefined {
+    try {
+      return Telefono.crear(text);
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  /**
+   * Delegado al Value Object Email del Dominio.
    */
   private parseEmail(text: string): Email | undefined {
-    const match = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
-    if (match) {
-      try {
-        return new Email(match[1]);
-      } catch (e) {
-        return undefined;
-      }
+    try {
+      return Email.crear(text);
+    } catch (e) {
+      return undefined;
     }
-    return undefined;
   }
 
   /**
@@ -67,17 +89,19 @@ export class SessionLeadManager {
     if (!data) return; // No hay datos para guardar
 
     const nombre = data["Nombre_y_Apellido"];
-    const contactoRaw = data["Telefono_WhatsApp_Email"] || '';
+    const telefonoRaw = data["Telefono_WhatsApp"] || data["Telefono"] || data["Telefono_WhatsApp_Email"] || '';
+    const emailRaw = data["Correo_Electronico"] || data["Email"] || data["Telefono_WhatsApp_Email"] || '';
     
-    // Tratamos de extraer teléfono o email del campo unificado
-    const telefono = this.parseTelefono(contactoRaw);
-    const email = this.parseEmail(contactoRaw);
+    // Tratamos de extraer teléfono o email de los campos correspondientes
+    const telefono = this.parseTelefono(telefonoRaw);
+    const email = this.parseEmail(emailRaw);
 
     // Si tenemos Curso de Interés, es un LeadListaEspera
     if (data["Curso_Interes"]) {
       const lead: LeadListaEspera = {
         nombre: nombre,
         telefono: telefono,
+        correoElectronico: email,
         cursoDeInteres: data["Curso_Interes"]
       };
       await this.leadRepository.saveListaEspera(sessionId, lead);
