@@ -11,4 +11,5 @@ docker compose build whatsapp-bot
 # Ejecutamos un contenedor temporal con la variable de entorno INTERFACE=command
 # Esto anula la configuración del config.json sólo para esta ejecución.
 # --rm asegura que el contenedor temporal se elimine al salir.
-docker compose run --rm -e INTERFACE=command whatsapp-bot
+# --name asigna un nombre distintivo al contenedor para evitar colisiones
+docker compose run --rm --name cli-bot -e INTERFACE=command -e FLOW_FILE=flow_cfp412.json whatsapp-bot

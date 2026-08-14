@@ -3,6 +3,7 @@ import { JsonFlowAdapter } from 'motor-decision';
 import { ConsoleAdapter } from './infrastructure/adapters/ConsoleAdapter';
 import { WhatsAppAdapter } from './infrastructure/adapters/WhatsAppAdapter';
 import { CsvLeadRepository } from './infrastructure/repositories/CsvLeadRepository';
+import * as path from 'path';
 
 async function main() {
     const config = loadConfig();
@@ -11,10 +12,11 @@ async function main() {
     let flowProvider;
     if (config.inputAdapter === 'file') {
         try {
-            flowProvider = new JsonFlowAdapter(config.mockupFilePath, "MSG_INICIAL");
-            console.log(`Mockup cargado desde ${config.mockupFilePath}`);
+            const flowPath = path.resolve(process.cwd(), 'src/flows', config.flowFile);
+            flowProvider = new JsonFlowAdapter(flowPath, "MSG_INICIAL");
+            console.log(`Flujo cargado desde ${flowPath}`);
         } catch (e) {
-            console.error("Error crítico al cargar los datos del mockup. Abortando.");
+            console.error("Error crítico al cargar el flujo. Abortando.");
             process.exit(1);
         }
     } else {

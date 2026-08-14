@@ -4,7 +4,7 @@ import * as path from 'path';
 export interface AppConfig {
     interface: 'command' | 'baileys';
     inputAdapter: 'file'; // can be extended to 'api', 'db', etc.
-    mockupFilePath: string;
+    flowFile: string;
     leadsStorage: {
         type: 'csv';
         filePath: string;
@@ -22,7 +22,7 @@ export function loadConfig(): AppConfig {
         config = {
             interface: 'command',
             inputAdapter: 'file',
-            mockupFilePath: 'src/flows/flow_cfp412.json',
+            flowFile: 'flow_cfp412.json',
             leadsStorage: {
                 type: 'csv',
                 filePath: 'data/leads.csv'
@@ -32,6 +32,10 @@ export function loadConfig(): AppConfig {
 
     if (process.env.INTERFACE === 'command' || process.env.INTERFACE === 'baileys') {
         config.interface = process.env.INTERFACE;
+    }
+
+    if (process.env.FLOW_FILE) {
+        config.flowFile = process.env.FLOW_FILE;
     }
 
     return config;
