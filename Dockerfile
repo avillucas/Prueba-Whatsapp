@@ -5,17 +5,17 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# Copiamos motor-decision (necesario para la dependencia local file:../motorDecision)
-COPY motorDecision /motorDecision
+# Copiamos la librería motorDecision local si existe en el proyecto
+COPY motorDecision ./motorDecision
 
-# Copiamos los archivos de dependencias y configuración de test
-COPY ["Prueba Whatsapp/package.json", "Prueba Whatsapp/tsconfig.json", "Prueba Whatsapp/jest.config.js", "./"]
+# Copiamos los archivos de dependencias
+COPY package.json tsconfig.json jest.config.js ./
 
-# Instalamos dependencias
+# Instalamos dependencias (incluyendo devDependencies para compilar)
 RUN npm install
 
 # Copiamos el código fuente
-COPY ["Prueba Whatsapp/src", "./src"]
+COPY src ./src
 
 # Compilamos TypeScript a JavaScript
 RUN npm run build
@@ -27,21 +27,21 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# Copiamos motor-decision también en producción (npm install intentará leer file:../motorDecision)
-COPY motorDecision /motorDecision
+# Copiamos la librería motorDecision local
+COPY motorDecision ./motorDecision
 
-# Copiamos los archivos de dependencias
-COPY ["Prueba Whatsapp/package.json", "./"]
+# Copiamos package.json
+COPY package.json ./
 
-# Instalamos dependencias
+# Instalamos dependencias de producción
 RUN npm install --omit=dev
 
 # Copiamos los archivos compilados desde la etapa de construcción
 COPY --from=builder /app/dist ./dist
 
-# Copiamos los archivos JSON de configuración
-COPY ["Prueba Whatsapp/src/config/config.json", "./src/config/config.json"]
-COPY ["Prueba Whatsapp/flows/", "./flows/"]
+# Copiamos archivos de configuración y flujos
+COPY src/config/config.json ./src/config/config.json
+COPY flows ./flows
 
 # Comando para iniciar la aplicación
 CMD ["npm", "start"]

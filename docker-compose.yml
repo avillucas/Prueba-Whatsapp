@@ -1,8 +1,8 @@
 services:
   whatsapp-bot:
     build:
-      context: ..
-      dockerfile: Prueba Whatsapp/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: whatsapp-bot
     env_file:
       - .env
