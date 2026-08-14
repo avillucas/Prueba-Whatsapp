@@ -1,3 +1,5 @@
 auth_info/*.json
 node_modules/
 data/*.csv
+coverage/
+dist/
