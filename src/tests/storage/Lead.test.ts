@@ -47,19 +47,45 @@ describe("Domain Entities - Value Objects", () => {
     it("Debería lanzar error si falta el @", () => {
       expect(() => {
         new Email("usuarioejemplo.com");
-      }).toThrow("El formato del correo electrónico no es válido.");
+      }).toThrow(/El formato del correo electrónico no es válido/);
     });
 
     it("Debería lanzar error si falta el dominio", () => {
       expect(() => {
         new Email("usuario@");
-      }).toThrow("El formato del correo electrónico no es válido.");
+      }).toThrow(/El formato del correo electrónico no es válido/);
     });
 
     it("Debería lanzar error si tiene espacios", () => {
       expect(() => {
         new Email("usuario @ejemplo.com");
-      }).toThrow("El formato del correo electrónico no es válido.");
+      }).toThrow(/El formato del correo electrónico no es válido/);
+    });
+
+    it("Debería crear Email con Email.crear o lanzar error", () => {
+      const e = Email.crear("test@email.com");
+      expect(e.valor).toBe("test@email.com");
+      expect(() => Email.crear("invalido")).toThrow(/El correo electrónico no tiene un formato válido/);
+    });
+  });
+
+  describe("Telefono.crear", () => {
+    it("Debería crear teléfonos válidos con código de país 54 o 11", () => {
+      const t1 = Telefono.crear("+54 9 11 3520-4878");
+      expect(t1.codigoArea).toBe("54");
+      expect(t1.numero).toBe("91135204878");
+
+      const t2 = Telefono.crear("11 3520-4878");
+      expect(t2.codigoArea).toBe("11");
+      expect(t2.numero).toBe("35204878");
+
+      const t3 = Telefono.crear("221 456 7890");
+      expect(t3.codigoArea).toBe("221");
+      expect(t3.numero).toBe("4567890");
+    });
+
+    it("Debería lanzar error si tiene menos de 6 dígitos", () => {
+      expect(() => Telefono.crear("123")).toThrow("El número de teléfono debe contener al menos 6 dígitos numéricos.");
     });
   });
 

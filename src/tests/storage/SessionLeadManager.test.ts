@@ -90,4 +90,28 @@ describe("SessionLeadManager - Generación de Leads", () => {
     expect(saved.telefono).toBeUndefined();
     expect(saved.correoElectronico).toBeUndefined();
   });
+
+  it("Debería soportar initSession, getSessionData y hasValidField", () => {
+    const sessionId = "session_init_1";
+    manager.initSession(sessionId, {
+      Telefono_WhatsApp: "+5491135204878",
+      Correo_Electronico: "invalido" // No debe guardarse por inválido
+    });
+
+    expect(manager.getSessionData(sessionId, "Telefono_WhatsApp")).toBe("+5491135204878");
+    expect(manager.getSessionData(sessionId, "Correo_Electronico")).toBeUndefined();
+    expect(manager.hasValidField(sessionId, "Telefono_WhatsApp")).toBe(true);
+    expect(manager.hasValidField(sessionId, "Correo_Electronico")).toBe(false);
+  });
+
+  it("Debería delegar la validación a LeadValidator", () => {
+    expect(manager.validateField("Correo_Electronico", "test@test.com")).toBeNull();
+    expect(manager.validateField("Correo_Electronico", "invalido")).not.toBeNull();
+  });
+
+  it("No debería guardar nada al finalizar si la sesión no tiene datos", async () => {
+    await manager.finalizeSession("sesion_inexistente");
+    expect(repository.savedContactos.length).toBe(0);
+    expect(repository.savedListasEspera.length).toBe(0);
+  });
 });
