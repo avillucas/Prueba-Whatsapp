@@ -1,7 +1,7 @@
 {
   "interface": "command",
   "inputAdapter": "file",
-  "mockupFilePath": "src/mockup.json",
+  "mockupFilePath": "src/flow_cfp412.json",
   "leadsStorage": {
     "type": "csv",
     "filePath": "data/leads.csv"

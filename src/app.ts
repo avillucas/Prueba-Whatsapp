@@ -1,20 +1,17 @@
 import { loadConfig } from './config';
-import { loadMockupFromJson } from './jsonAdapter';
-import { startCommandInterface } from './interfaces/commandInterface';
-import { startBaileysInterface } from './interfaces/baileysInterface';
-import { DecisionNode } from 'motor-decision';
-// Si el adaptador de entrada cambia (ej. a una base de datos), se puede agregar la lógica aquí.
+import { JsonFlowAdapter } from 'motor-decision';
+import { ConsoleAdapter } from './interfaces/ConsoleAdapter';
+import { WhatsAppAdapter } from './interfaces/WhatsAppAdapter';
+import { CsvLeadRepository } from './storage/CsvLeadRepository';
 
 async function main() {
     const config = loadConfig();
     console.log(`Cargando configuración... Interface: ${config.interface}, Entrada: ${config.inputAdapter}`);
 
-    let nodes: DecisionNode[] = [];
-
-    // Selección de adaptador de entrada
+    let flowProvider;
     if (config.inputAdapter === 'file') {
         try {
-            nodes = loadMockupFromJson(config.mockupFilePath);
+            flowProvider = new JsonFlowAdapter(config.mockupFilePath, "MSG_INICIAL");
             console.log(`Mockup cargado desde ${config.mockupFilePath}`);
         } catch (e) {
             console.error("Error crítico al cargar los datos del mockup. Abortando.");
@@ -25,11 +22,14 @@ async function main() {
         process.exit(1);
     }
 
-    // Selección de interfaz
+    const leadRepo = new CsvLeadRepository('./data');
+
     if (config.interface === 'command') {
-        startCommandInterface(config, nodes);
+        const adapter = new ConsoleAdapter(flowProvider, leadRepo);
+        adapter.start();
     } else if (config.interface === 'baileys') {
-        await startBaileysInterface(config, nodes);
+        const adapter = new WhatsAppAdapter(flowProvider, leadRepo);
+        await adapter.start();
     } else {
         console.error(`Interface '${config.interface}' no configurada correctamente.`);
         process.exit(1);
