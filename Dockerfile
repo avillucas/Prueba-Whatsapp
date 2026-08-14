@@ -41,7 +41,7 @@ COPY --from=builder /app/dist ./dist
 
 # Copiamos los archivos JSON de configuración
 COPY ["Prueba Whatsapp/src/config/config.json", "./src/config/config.json"]
-COPY ["Prueba Whatsapp/src/flows/", "./src/flows/"]
+COPY ["Prueba Whatsapp/flows/", "./flows/"]
 
 # Comando para iniciar la aplicación
 CMD ["npm", "start"]

@@ -2,10 +2,7 @@ import { loadConfig } from './config/config';
 import { JsonFlowAdapter } from 'motor-decision';
 import { ConsoleAdapter } from './infrastructure/adapters/ConsoleAdapter';
 import { WhatsAppAdapter } from './infrastructure/adapters/WhatsAppAdapter';
-import { CsvLeadRepository } from './infrastructure/repositories/CsvLeadRepository';
-import { GoogleSheetsLeadRepository } from './infrastructure/repositories/GoogleSheetsLeadRepository';
-import { CompositeLeadRepository } from './infrastructure/repositories/CompositeLeadRepository';
-import { LeadRepository } from './domain/LeadRepository';
+import { LeadRepositoryFactory } from './infrastructure/repositories/LeadRepositoryFactory';
 import * as path from 'path';
 
 async function main() {
@@ -22,7 +19,7 @@ async function main() {
     let flowProvider;
     if (config.inputAdapter === 'file') {
         try {
-            const flowPath = path.resolve(process.cwd(), 'src/flows', config.flowFile);
+            const flowPath = path.resolve(process.cwd(), 'flows', config.flowFile);
             flowProvider = new JsonFlowAdapter(flowPath, "MSG_INICIAL");
             console.log(`Flujo cargado desde ${flowPath}`);
         } catch (e) {
@@ -34,24 +31,8 @@ async function main() {
         process.exit(1);
     }
 
-    let leadRepo: LeadRepository;
-    const csvRepo = new CsvLeadRepository('./data');
-    const googleSheetsRepo = new GoogleSheetsLeadRepository({
-        spreadsheetId: config.leadsStorage.googleSheets?.spreadsheetId,
-        clientEmail: config.leadsStorage.googleSheets?.clientEmail,
-        privateKey: config.leadsStorage.googleSheets?.privateKey,
-        sheetContactoName: config.leadsStorage.googleSheets?.sheetContactoName,
-        sheetListaEsperaName: config.leadsStorage.googleSheets?.sheetListaEsperaName,
-        webhookUrl: config.leadsStorage.googleSheets?.webhookUrl
-    });
-
-    if (config.leadsStorage.type === 'google_sheets') {
-        leadRepo = googleSheetsRepo;
-    } else if (config.leadsStorage.type === 'composite') {
-        leadRepo = new CompositeLeadRepository([csvRepo, googleSheetsRepo]);
-    } else {
-        leadRepo = csvRepo;
-    }
+    // Instancia el LeadRepository usando el patrón Factory (por defecto 'csv', o 'google_sheets' / 'googlesheet')
+    const leadRepo = LeadRepositoryFactory.create(config.leadsStorage.type, config);
 
     if (config.interface === 'command') {
         const adapter = new ConsoleAdapter(flowProvider, leadRepo);

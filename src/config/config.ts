@@ -15,7 +15,7 @@ export interface AppConfig {
     inputAdapter: 'file';
     flowFile: string;
     leadsStorage: {
-        type: 'csv' | 'google_sheets' | 'composite';
+        type: 'csv' | 'google_sheets' | 'googlesheet' | 'composite';
         filePath?: string;
         googleSheets?: GoogleSheetsConfig;
     };
@@ -54,9 +54,9 @@ export function loadConfig(): AppConfig {
     }
 
     if (process.env.LEADS_STORAGE_TYPE) {
-        const storageType = process.env.LEADS_STORAGE_TYPE.toLowerCase();
-        if (storageType === 'csv' || storageType === 'google_sheets' || storageType === 'composite') {
-            config.leadsStorage.type = storageType as 'csv' | 'google_sheets' | 'composite';
+        const storageType = process.env.LEADS_STORAGE_TYPE.toLowerCase().trim();
+        if (storageType === 'csv' || storageType === 'google_sheets' || storageType === 'googlesheet' || storageType === 'composite') {
+            config.leadsStorage.type = storageType as any;
         }
     }
 
@@ -78,7 +78,8 @@ export function loadConfig(): AppConfig {
     gs.sheetListaEsperaName = process.env.GOOGLE_SHEETS_TAB_LISTA_ESPERA || gs.sheetListaEsperaName || 'ListaEspera';
 
     // Validación de credenciales obligatorias si Google Sheets está activo
-    if (config.leadsStorage.type === 'google_sheets' || config.leadsStorage.type === 'composite') {
+    const storageType = (config.leadsStorage.type || '').toLowerCase();
+    if (storageType === 'google_sheets' || storageType === 'googlesheet' || storageType === 'composite') {
         const hasWebhook = Boolean(gs.webhookUrl && gs.webhookUrl.trim() !== '');
         const hasServiceAccount = Boolean(
             gs.spreadsheetId && gs.spreadsheetId.trim() !== '' &&
