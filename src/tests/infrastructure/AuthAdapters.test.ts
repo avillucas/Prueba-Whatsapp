@@ -25,7 +25,7 @@ jest.mock('@google-cloud/storage', () => {
       bucket: jest.fn(() => mockBucket)
     }))
   };
-});
+}, { virtual: true });
 
 describe('Auth Storage Adapters Suite', () => {
   const testAuthDir = path.resolve(__dirname, 'temp_test_auth_info');

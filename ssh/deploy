@@ -6,6 +6,18 @@ echo "🚀 Iniciando despliegue de producción del WhatsApp Bot (Docker CLI)..."
 # Asegurar que existan los directorios requeridos por los volúmenes
 mkdir -p auth_info data flows
 
+# 0. Copiar versión distribuida de motorDecision desde ../motorDecision (ignorado por Git)
+if [ -d "../motorDecision" ]; then
+    echo "🔄 Copiando la librería precompilada desde ../motorDecision..."
+    mkdir -p motorDecision/dist
+    if [ -d "../motorDecision/dist" ]; then
+        cp -r ../motorDecision/dist/* motorDecision/dist/ 2>/dev/null || true
+    fi
+    if [ -f "../motorDecision/package.json" ]; then
+        cp ../motorDecision/package.json motorDecision/package.json 2>/dev/null || true
+    fi
+fi
+
 # 1. Construir la imagen de producción
 echo "📦 Construyendo la imagen Docker de producción..."
 docker build -t whatsapp-bot:latest .
