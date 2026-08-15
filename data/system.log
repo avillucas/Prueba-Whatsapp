@@ -159,3 +159,57 @@
 [2026-08-15T01:42:49.850Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-15T01:42:49.849Z","s2","Test","","",""]
 [2026-08-15T01:42:49.972Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
 [2026-08-15T01:42:50.048Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-15T01:50:33.924Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-15T01:50:34.228Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:50:34.228Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-15T01:50:34.236Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-15T01:50:34.237Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-15T01:50:34.241Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-15T01:50:34.242Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-15T01:50:34.243Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786758634197). Guardando el Lead.
+[2026-08-15T01:50:34.246Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786758634197)
+[2026-08-15T01:50:34.267Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:50:34.269Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786758634256)
+[2026-08-15T01:50:34.291Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:50:34.362Z] [FileAuthAdapter] INFO: Directorio de sesión '/app/src/tests/infrastructure/temp_test_auth_info' creado localmente.
+[2026-08-15T01:50:34.384Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente '/app/src/tests/infrastructure/temp_test_auth_info'.
+[2026-08-15T01:50:34.396Z] [FileAuthAdapter] INFO: Directorio de sesión '/app/src/tests/infrastructure/temp_test_auth_info' creado localmente.
+[2026-08-15T01:50:34.397Z] [FileAuthAdapter] INFO: Credenciales actualizadas en el almacenamiento local.
+[2026-08-15T01:50:34.413Z] [GoogleAuthAdapter] INFO: Descargando sesión de autenticación desde el bucket GCS 'test-bucket'...
+[2026-08-15T01:50:34.414Z] [GoogleAuthAdapter] INFO: Sesión descargada exitosamente desde GCS (2 archivos).
+[2026-08-15T01:50:34.420Z] [GoogleAuthAdapter] INFO: Descargando sesión de autenticación desde el bucket GCS 'test-bucket'...
+[2026-08-15T01:50:34.421Z] [GoogleAuthAdapter] INFO: No se encontraron archivos previos en GCS (auth_info/). Se iniciará nueva sesión.
+[2026-08-15T01:50:34.428Z] [GoogleAuthAdapter] INFO: Descargando sesión de autenticación desde el bucket GCS 'test-bucket'...
+[2026-08-15T01:50:34.430Z] [GoogleAuthAdapter] INFO: Aviso al descargar de GCS: GCS Error Network. Continuando con directorio local.
+[2026-08-15T01:50:34.582Z] [GoogleAuthAdapter] INFO: Archivos de autenticación sincronizados a GCS bucket 'test-bucket'.
+[2026-08-15T01:50:34.696Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-15T01:50:34.696Z","s1","Test","","",""]
+[2026-08-15T01:50:34.697Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-15T01:50:34.697Z","s2","Test","","",""]
+[2026-08-15T01:50:35.686Z] [FileAuthAdapter] INFO: Directorio de sesión './auth_info' creado localmente.
+[2026-08-15T01:50:35.701Z] [WhatsAppAdapter] INFO: Conexión establecida con éxito.
+[2026-08-15T01:50:35.701Z] [WhatsAppAdapter] INFO: Conexión cerrada. Reconectando: false
+[2026-08-15T01:50:35.701Z] [WhatsAppAdapter] INFO: Sesión deslogueada. Borra la carpeta auth_info para escaneo de nuevo QR.
+[2026-08-15T01:50:35.702Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:50:35.705Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:50:35.706Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Hola"
+[2026-08-15T01:50:35.707Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204878_1f6a2b_mstpyit7 para 5491135204878@s.whatsapp.net
+[2026-08-15T01:50:35.708Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204878@s.whatsapp.net
+[2026-08-15T01:50:35.708Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "A"
+[2026-08-15T01:50:35.708Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-15T01:50:35.709Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Lucas Avila"
+[2026-08-15T01:50:35.709Z] [WhatsAppAdapter] INFO: Auto-completando 'Telefono_WhatsApp' para 5491135204878@s.whatsapp.net con valor: "5491135204878"
+[2026-08-15T01:50:35.709Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: FIN)
+[2026-08-15T01:50:35.709Z] [WhatsAppAdapter] INFO: Fin de flujo alcanzado para 5491135204878_1f6a2b_mstpyit7. Guardando Lead...
+[2026-08-15T01:50:35.711Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:50:35.711Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "Hola"
+[2026-08-15T01:50:35.712Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204879_1f6a2b_mstpyitc para 5491135204879@s.whatsapp.net
+[2026-08-15T01:50:35.712Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204879@s.whatsapp.net
+[2026-08-15T01:50:35.712Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "A"
+[2026-08-15T01:50:35.712Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204879@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-15T01:50:35.712Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "123"
+[2026-08-15T01:50:35.712Z] [WhatsAppAdapter] INFO: Validación fallida para 5491135204879@s.whatsapp.net (Campo: Nombre_y_Apellido): "123"
+[2026-08-15T01:50:35.714Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:50:35.714Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "Hola"
+[2026-08-15T01:50:35.714Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204880_1f6a2b_mstpyite para 5491135204880@s.whatsapp.net
+[2026-08-15T01:50:35.714Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204880@s.whatsapp.net
+[2026-08-15T01:50:35.715Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "salir"
+[2026-08-15T01:50:35.715Z] [WhatsAppAdapter] INFO: Sesión finalizada manualmente por usuario 5491135204880@s.whatsapp.net

@@ -4,3 +4,5 @@ data/*.csv
 coverage/
 dist/
 motorDecision/
+data/system.log
+data/errors.log
