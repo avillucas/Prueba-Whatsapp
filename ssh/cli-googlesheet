@@ -16,9 +16,8 @@ if [ -f ".env" ]; then
 fi
 
 # Ejecutamos el contenedor temporal con las variables sobreescritas para Google Sheets
-docker compose run --rm \
+docker compose $ENV_FILE_FLAG run --rm \
   --name cli-googlesheet \
-  $ENV_FILE_FLAG \
   -e INTERFACE=${INTERFACE:-baileys} \
   -e FLOW_FILE=${FLOW_FILE:-flow_cfp412.json} \
   -e LEADS_STORAGE_TYPE=google_sheets \

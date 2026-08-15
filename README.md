@@ -66,7 +66,6 @@ El sistema maneja su configuración centralizada a través de `src/config/config
 | `GOOGLE_SPREADSHEET_ID` | *string* | `""` | **`GoogleSheetsAdapter`**: ID de la hoja de cálculo de Google Sheets. |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | *email* | `""` | **`GoogleSheetsAdapter` / `GoogleAuthAdapter`**: Correo de la Service Account de Google Cloud. |
 | `GOOGLE_PRIVATE_KEY` | *string (RSA)* | `""` | **`GoogleSheetsAdapter` / `GoogleAuthAdapter`**: Clave privada RSA de la Service Account para autenticación JWT. |
-| `GOOGLE_SHEETS_WEBHOOK_URL` | *URL* | `""` | **`GoogleSheetsAdapter`**: Webhook endpoint alternativo (Google Apps Script) para agregar registros. |
 | `GOOGLE_SHEETS_TAB_CONTACTOS` | *string* | `Contactos` | **`GoogleSheetsLeadRepository`**: Nombre de la pestaña para guardar contactos. |
 | `GOOGLE_SHEETS_TAB_LISTA_ESPERA` | *string* | `ListaEspera` | **`GoogleSheetsLeadRepository`**: Nombre de la pestaña para guardar lista de espera. |
 

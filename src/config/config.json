@@ -9,7 +9,6 @@
       "spreadsheetId": "",
       "clientEmail": "",
       "privateKey": "",
-      "webhookUrl": "",
       "sheetContactoName": "Contactos",
       "sheetListaEsperaName": "ListaEspera"
     }

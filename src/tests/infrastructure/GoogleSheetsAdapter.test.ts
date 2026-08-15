@@ -34,27 +34,6 @@ describe("GoogleSheetsAdapter", () => {
     httpStatusCode = 200;
   });
 
-  it("Debería enviar datos via Webhook exitosamente", async () => {
-    const adapter = new GoogleSheetsAdapter({
-      webhookUrl: "https://script.google.com/macros/s/xyz/exec"
-    });
-    httpStatusCode = 200;
-    httpResponseData = JSON.stringify({ status: "ok" });
-
-    const res = await adapter.appendRow("Sheet1", ["val1", "val2"]);
-    expect(res).toBe(true);
-  });
-
-  it("Debería lanzar error si Webhook responde con status de error", async () => {
-    const adapter = new GoogleSheetsAdapter({
-      webhookUrl: "https://script.google.com/macros/s/xyz/exec"
-    });
-    httpStatusCode = 500;
-    httpResponseData = "Webhook error";
-
-    await expect(adapter.appendRow("Sheet1", ["val1"])).rejects.toThrow(/Error Webhook \(500\)/);
-  });
-
   it("Debería hacer appendRow via Service Account OAuth2", async () => {
     const adapter = new GoogleSheetsAdapter({
       spreadsheetId: "sheet123",

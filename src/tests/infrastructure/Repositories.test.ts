@@ -51,7 +51,7 @@ describe("Infrastructure Repositories & Adapters", () => {
   });
 
   describe("GoogleSheetsAdapter & GoogleSheetsLeadRepository", () => {
-    it("Debería hacer fallback a Dry Run si no hay credenciales ni webhook", async () => {
+    it("Debería hacer fallback a Dry Run si no hay credenciales", async () => {
       const gsRepo = new GoogleSheetsLeadRepository({});
       await expect(gsRepo.saveContacto("s1", { nombre: "Test" })).resolves.toBeUndefined();
       await expect(gsRepo.saveListaEspera("s2", { nombre: "Test" })).resolves.toBeUndefined();
@@ -63,7 +63,7 @@ describe("Infrastructure Repositories & Adapters", () => {
       await expect(gsRepo.getListaEspera()).rejects.toThrow(/requiere spreadsheetId/);
     });
 
-    it("Debería delegar llamadas via Webhook si webhookUrl está presente", async () => {
+    it("Debería delegar llamadas al adapter de GoogleSheets", async () => {
       const mockAdapter = {
         appendRow: jest.fn().mockResolvedValue(true),
         readRows: jest.fn().mockResolvedValue([["col1", "col2"]])

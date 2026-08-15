@@ -213,3 +213,6 @@
 [2026-08-15T01:50:35.714Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204880@s.whatsapp.net
 [2026-08-15T01:50:35.715Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "salir"
 [2026-08-15T01:50:35.715Z] [WhatsAppAdapter] INFO: Sesión finalizada manualmente por usuario 5491135204880@s.whatsapp.net
+[2026-08-15T18:05:22.131Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T18:05:28.291Z] [WhatsAppAdapter] INFO: Conexión cerrada. Reconectando: false
+[2026-08-15T18:05:28.291Z] [WhatsAppAdapter] INFO: Sesión deslogueada. Borra la carpeta auth_info para escaneo de nuevo QR.

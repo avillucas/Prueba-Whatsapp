@@ -5,7 +5,6 @@ export interface GoogleSheetsConfig {
     spreadsheetId?: string;
     clientEmail?: string;
     privateKey?: string;
-    webhookUrl?: string;
     sheetContactoName?: string;
     sheetListaEsperaName?: string;
 }
@@ -132,7 +131,6 @@ export function loadConfig(): AppConfig {
     gs.spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID || gs.spreadsheetId || '';
     gs.clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || gs.clientEmail || '';
     gs.privateKey = process.env.GOOGLE_PRIVATE_KEY || gs.privateKey || '';
-    gs.webhookUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL || gs.webhookUrl || '';
 
     // Nombres de hojas con valores por defecto a menos que se hayan ingresado
     gs.sheetContactoName = process.env.GOOGLE_SHEETS_TAB_CONTACTOS || gs.sheetContactoName || 'Contactos';
@@ -141,21 +139,20 @@ export function loadConfig(): AppConfig {
     // Validación de credenciales obligatorias si Google Sheets está activo
     const storageType = (config.leadsStorage.type || '').toLowerCase();
     if (storageType === 'google_sheets' || storageType === 'googlesheet' || storageType === 'composite') {
-        const hasWebhook = Boolean(gs.webhookUrl && gs.webhookUrl.trim() !== '');
         const hasServiceAccount = Boolean(
             gs.spreadsheetId && gs.spreadsheetId.trim() !== '' &&
             gs.clientEmail && gs.clientEmail.trim() !== '' &&
             gs.privateKey && gs.privateKey.trim() !== ''
         );
 
-        if (!hasWebhook && !hasServiceAccount) {
+        if (!hasServiceAccount) {
             const missingParams: string[] = [];
             if (!gs.spreadsheetId) missingParams.push("spreadsheetId (o GOOGLE_SPREADSHEET_ID)");
             if (!gs.clientEmail) missingParams.push("clientEmail (o GOOGLE_SERVICE_ACCOUNT_EMAIL)");
             if (!gs.privateKey) missingParams.push("privateKey (o GOOGLE_PRIVATE_KEY)");
 
             throw new Error(
-                `[ConfigError] Google Sheets está activo ('${config.leadsStorage.type}') pero faltan los datos de autenticación obligatorios: ${missingParams.join(', ')} (o bien 'webhookUrl' / GOOGLE_SHEETS_WEBHOOK_URL).`
+                `[ConfigError] Google Sheets está activo ('${config.leadsStorage.type}') pero faltan los datos de autenticación obligatorios: ${missingParams.join(', ')}.`
             );
         }
     }

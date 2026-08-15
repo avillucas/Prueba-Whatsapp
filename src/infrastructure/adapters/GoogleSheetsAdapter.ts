@@ -6,20 +6,17 @@ export interface GoogleSheetsAdapterConfig {
   spreadsheetId?: string;
   clientEmail?: string;
   privateKey?: string;
-  webhookUrl?: string; // Soporte para Google Apps Script Web App Endpoint
 }
 
 export class GoogleSheetsAdapter {
   private spreadsheetId: string;
   private clientEmail: string;
   private privateKey: string;
-  private webhookUrl: string;
 
   constructor(config: GoogleSheetsAdapterConfig = {}) {
     this.spreadsheetId = config.spreadsheetId || process.env.GOOGLE_SPREADSHEET_ID || '';
     this.clientEmail = config.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '';
     this.privateKey = (config.privateKey || process.env.GOOGLE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-    this.webhookUrl = config.webhookUrl || process.env.GOOGLE_SHEETS_WEBHOOK_URL || '';
   }
 
   /**
@@ -100,50 +97,9 @@ export class GoogleSheetsAdapter {
   }
 
   /**
-   * Envía una fila a Google Sheets via Webhook (Google Apps Script)
-   */
-  private async appendViaWebhook(sheetName: string, values: string[]): Promise<boolean> {
-    const payload = JSON.stringify({ sheetName, values, action: 'append' });
-    const url = new URL(this.webhookUrl);
-
-    return new Promise((resolve, reject) => {
-      const req = https.request(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload)
-        }
-      }, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => {
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 400) {
-            ErrorHandler.logSystem('GoogleSheetsAdapter', `Fila agregada via Webhook en '${sheetName}'`);
-            resolve(true);
-          } else {
-            reject(new Error(`Error Webhook (${res.statusCode}): ${data}`));
-          }
-        });
-      });
-
-      req.on('error', (err) => reject(err));
-      req.write(payload);
-      req.end();
-    });
-  }
-
-  /**
    * Agrega una fila de datos a la pestaña indicada en Google Sheets (Escribir).
    */
   public async appendRow(sheetName: string, values: string[]): Promise<boolean> {
-    if (this.webhookUrl) {
-      try {
-        return await this.appendViaWebhook(sheetName, values);
-      } catch (error) {
-        ErrorHandler.handle('GoogleSheetsAdapter', error, { sheetName, action: 'appendViaWebhook' });
-        throw error;
-      }
-    }
 
     if (this.spreadsheetId && this.clientEmail && this.privateKey) {
       try {

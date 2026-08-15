@@ -24,8 +24,7 @@ export class LeadRepositoryFactory {
         clientEmail: gsConfig.clientEmail,
         privateKey: gsConfig.privateKey,
         sheetContactoName: gsConfig.sheetContactoName,
-        sheetListaEsperaName: gsConfig.sheetListaEsperaName,
-        webhookUrl: gsConfig.webhookUrl
+        sheetListaEsperaName: gsConfig.sheetListaEsperaName
       });
     }
 
@@ -38,8 +37,7 @@ export class LeadRepositoryFactory {
         clientEmail: gsConfig.clientEmail,
         privateKey: gsConfig.privateKey,
         sheetContactoName: gsConfig.sheetContactoName,
-        sheetListaEsperaName: gsConfig.sheetListaEsperaName,
-        webhookUrl: gsConfig.webhookUrl
+        sheetListaEsperaName: gsConfig.sheetListaEsperaName
       });
 
       return new CompositeLeadRepository([csvRepo, gsRepo]);
