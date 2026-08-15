@@ -16,6 +16,11 @@ export interface AuthStorageConfig {
     bucketName?: string;
 }
 
+export interface LoggingConfig {
+    type: 'file' | 'gcp' | 'google' | 'console';
+    logDir?: string;
+}
+
 export interface AppConfig {
     interface: 'command' | 'baileys';
     inputAdapter: 'file';
@@ -26,6 +31,7 @@ export interface AppConfig {
         googleSheets?: GoogleSheetsConfig;
     };
     authStorage?: AuthStorageConfig;
+    loggingStorage?: LoggingConfig;
 }
 
 export function loadConfig(): AppConfig {
@@ -94,6 +100,25 @@ export function loadConfig(): AppConfig {
 
     if (process.env.AUTH_DIR) {
         config.authStorage.authDir = process.env.AUTH_DIR;
+    }
+
+    // Inicializar sub-objeto loggingStorage si no existe
+    if (!config.loggingStorage) {
+        config.loggingStorage = {
+            type: 'file',
+            logDir: path.join(process.cwd(), 'data')
+        };
+    }
+
+    if (process.env.LOG_ADAPTER || process.env.LOG_TYPE) {
+        const logType = (process.env.LOG_ADAPTER || process.env.LOG_TYPE || '').toLowerCase().trim();
+        if (logType === 'file' || logType === 'gcp' || logType === 'google' || logType === 'console') {
+            config.loggingStorage.type = logType as any;
+        }
+    }
+
+    if (process.env.LOG_DIR) {
+        config.loggingStorage.logDir = process.env.LOG_DIR;
     }
 
     // Inicializar sub-objeto googleSheets si no existe

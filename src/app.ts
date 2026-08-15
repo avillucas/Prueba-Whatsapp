@@ -4,6 +4,8 @@ import { ConsoleAdapter } from './infrastructure/adapters/ConsoleAdapter';
 import { WhatsAppAdapter } from './infrastructure/adapters/WhatsAppAdapter';
 import { LeadRepositoryFactory } from './infrastructure/repositories/LeadRepositoryFactory';
 import { AuthStorageFactory } from './infrastructure/adapters/auth/AuthStorageFactory';
+import { LoggerFactory } from './infrastructure/adapters/logging/LoggerFactory';
+import { ErrorHandler } from './infrastructure/logging/ErrorHandler';
 import * as path from 'path';
 
 async function main() {
@@ -14,6 +16,10 @@ async function main() {
         console.error(`❌ ${e.message}`);
         process.exit(1);
     }
+
+    // Configurar el adaptador de logging según variables de entorno o config.json
+    const loggerAdapter = LoggerFactory.create(config.loggingStorage?.type, config);
+    ErrorHandler.setAdapter(loggerAdapter);
 
     console.log(`Cargando configuración... Interface: ${config.interface}, Entrada: ${config.inputAdapter}, Almacenamiento: ${config.leadsStorage.type}`);
 

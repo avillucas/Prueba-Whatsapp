@@ -40,7 +40,7 @@ jobs:
       - name: Run Linter
         run: npm run lint
 
-      - name: Run Unit Tests with Coverage (100% Target)
+      - name: Run Unit Tests with Coverage
         run: npm test
 
       - name: Build TypeScript Project
@@ -59,7 +59,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy to GCP VM via SSH
+      - name: Deploy & Inject Secrets via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.GCP_VM_HOST }}
@@ -67,10 +67,26 @@ jobs:
           key: ${{ secrets.GCP_VM_SSH_KEY }}
           port: 22
           script: |
-            echo "🚀 Iniciando despliegue en Google Cloud..."
+            echo "🚀 Actualizando repositorio en el servidor..."
             cd ~/Prueba-Whatsapp || cd ~/app
             git pull origin main
+
+            echo "🔒 Generando archivo .env de producción desde GitHub Secrets..."
+            cat << 'EOF' > .env
+            INTERFACE=${{ secrets.INTERFACE || 'baileys' }}
+            FLOW_FILE=${{ secrets.FLOW_FILE || 'flow_cfp412.json' }}
+            LEADS_STORAGE_TYPE=${{ secrets.LEADS_STORAGE_TYPE || 'google_sheets' }}
+            AUTH_STORAGE_TYPE=${{ secrets.AUTH_STORAGE_TYPE || 'google' }}
+            GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME }}"
+            GOOGLE_SERVICE_ACCOUNT_EMAIL="${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}"
+            GOOGLE_PRIVATE_KEY="${{ secrets.GOOGLE_PRIVATE_KEY }}"
+            GOOGLE_SPREADSHEET_ID="${{ secrets.GOOGLE_SPREADSHEET_ID }}"
+            EOF
+
+            # Otorgar permisos de lectura/escritura únicamente al dueño del servidor
+            chmod 600 .env
+
+            echo "🚀 Ejecutando script de despliegue Docker..."
             chmod +x ssh/deploy
             ./ssh/deploy
             echo "✅ Despliegue completado con éxito."
-

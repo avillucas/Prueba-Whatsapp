@@ -1,62 +1,52 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { LoggerAdapter } from '../../domain/LoggerAdapter';
+import { LoggerFactory } from '../adapters/logging/LoggerFactory';
+import { FileLoggerAdapter } from '../adapters/logging/FileLoggerAdapter';
 
 export class ErrorHandler {
-  private static logDirectory: string = path.join(process.cwd(), 'data');
-  private static errorLogFilePath: string = path.join(process.cwd(), 'data', 'errors.log');
-  private static systemLogFilePath: string = path.join(process.cwd(), 'data', 'system.log');
+  private static adapter: LoggerAdapter = LoggerFactory.create();
+
+  public static setAdapter(adapter: LoggerAdapter): void {
+    this.adapter = adapter;
+  }
+
+  public static getAdapter(): LoggerAdapter {
+    return this.adapter;
+  }
 
   public static setLogDirectory(dir: string): void {
-    this.logDirectory = dir;
-    this.errorLogFilePath = path.join(dir, 'errors.log');
-    this.systemLogFilePath = path.join(dir, 'system.log');
+    if (this.adapter instanceof FileLoggerAdapter) {
+      this.adapter.setLogDirectory(dir);
+    } else {
+      const fileAdapter = new FileLoggerAdapter(dir);
+      this.adapter = fileAdapter;
+    }
   }
 
   public static getErrorLogFilePath(): string {
-    return this.errorLogFilePath;
+    if (this.adapter instanceof FileLoggerAdapter) {
+      return this.adapter.getErrorLogFilePath();
+    }
+    return '';
   }
 
   public static getSystemLogFilePath(): string {
-    return this.systemLogFilePath;
-  }
-
-  private static ensureLogDirectory() {
-    if (!fs.existsSync(this.logDirectory)) {
-      fs.mkdirSync(this.logDirectory, { recursive: true });
+    if (this.adapter instanceof FileLoggerAdapter) {
+      return this.adapter.getSystemLogFilePath();
     }
+    return '';
   }
 
   /**
-   * Registra y maneja errores escribiéndolos en el archivo de log (errors.log)
-   * evitando mostrar detalles ruidosos en la consola.
+   * Registra y maneja errores usando el adaptador de logging configurado.
    */
   public static handle(context: string, error: any, extraData?: any): void {
-    try {
-      this.ensureLogDirectory();
-      const timestamp = new Date().toISOString();
-      const errorMessage = error instanceof Error ? error.stack || error.message : String(error);
-      const dataStr = extraData ? ` | Details: ${JSON.stringify(extraData)}` : '';
-      const logLine = `[${timestamp}] [${context}] ERROR: ${errorMessage}${dataStr}\n`;
-
-      fs.appendFileSync(this.errorLogFilePath, logLine, 'utf-8');
-    } catch (_err) {
-      // Ignorar fallos de I/O en disco
-    }
+    this.adapter.handleError(context, error, extraData);
   }
 
   /**
-   * Registra mensajes informativos y de sistema en el archivo de log (system.log)
-   * evitando saturar la consola estándar del usuario.
+   * Registra mensajes informativos y de sistema usando el adaptador de logging configurado.
    */
-  public static logSystem(context: string, message: string): void {
-    try {
-      this.ensureLogDirectory();
-      const timestamp = new Date().toISOString();
-      const logLine = `[${timestamp}] [${context}] INFO: ${message}\n`;
-
-      fs.appendFileSync(this.systemLogFilePath, logLine, 'utf-8');
-    } catch (_err) {
-      // Ignorar fallos de I/O en disco
-    }
+  public static logSystem(context: string, message: string, extraData?: any): void {
+    this.adapter.logSystem(context, message, extraData);
   }
 }
