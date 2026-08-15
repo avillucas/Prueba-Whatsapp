@@ -23,5 +23,9 @@
     "firestore": {
       "collectionName": "whatsapp_auth"
     }
+  },
+  "loggingStorage": {
+    "type": "file",
+    "logDir": "./logs"
   }
 }

@@ -137,7 +137,7 @@ export function loadConfig(): AppConfig {
     if (!config.loggingStorage) {
         config.loggingStorage = {
             type: 'file',
-            logDir: path.join(process.cwd(), 'logs')
+            logDir: './logs'
         };
     }
 
@@ -150,6 +150,8 @@ export function loadConfig(): AppConfig {
 
     if (process.env.LOG_DIR) {
         config.loggingStorage.logDir = process.env.LOG_DIR;
+    } else if (!config.loggingStorage.logDir) {
+        config.loggingStorage.logDir = './logs';
     }
 
     // Inicializar sub-objeto googleSheets si no existe

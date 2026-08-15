@@ -21,7 +21,7 @@ Este repositorio contiene un **WhatsApp Bot minimalista y modular** construido e
    - **Interfaz de Comunicación**: Intercambiable dinámicamente entre `command` (CLI interactivo) y `baileys` (WhatsApp).
    - **Autenticación NoSQL de Sesión**: Intercambiable mediante `AUTH_STORAGE_TYPE` (`redis` para desarrollo local / `firestore` para GCP).
    - **Persistencia de Leads**: Estrategias configurables en `LEADS_STORAGE_TYPE` (`csv`, `google_sheets`, `composite`).
-   - **Observabilidad y Logs**: Sistema centralizado vía `LOG_ADAPTER` (`file`, `gcp`, `console`).
+   - **Observabilidad y Logs**: Sistema centralizado vía `LOG_ADAPTER` (`file`, `gcp`, `console`). El directorio por defecto para los logs guardados en disco (`LOG_ADAPTER=file`) es `./logs`, montado como volumen persistente en `docker-compose.yml`.
 
 3. **Librería Externa `motor-decision`**:
    - La lógica conversacional reside en `./motorDecision` (gestionada como dependencia local precompilada en `package.json`).

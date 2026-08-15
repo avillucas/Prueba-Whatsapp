@@ -20,6 +20,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - LOG_DIR=./logs
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
