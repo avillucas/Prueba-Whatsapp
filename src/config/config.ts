@@ -10,6 +10,12 @@ export interface GoogleSheetsConfig {
     sheetListaEsperaName?: string;
 }
 
+export interface AuthStorageConfig {
+    type: 'file' | 'google' | 'gcs';
+    authDir?: string;
+    bucketName?: string;
+}
+
 export interface AppConfig {
     interface: 'command' | 'baileys';
     inputAdapter: 'file';
@@ -19,6 +25,7 @@ export interface AppConfig {
         filePath?: string;
         googleSheets?: GoogleSheetsConfig;
     };
+    authStorage?: AuthStorageConfig;
 }
 
 export function loadConfig(): AppConfig {
@@ -40,6 +47,11 @@ export function loadConfig(): AppConfig {
                     sheetContactoName: 'Contactos',
                     sheetListaEsperaName: 'ListaEspera'
                 }
+            },
+            authStorage: {
+                type: 'file',
+                authDir: './auth_info',
+                bucketName: 'whatsapp-bot-auth'
             }
         };
     }
@@ -58,6 +70,30 @@ export function loadConfig(): AppConfig {
         if (storageType === 'csv' || storageType === 'google_sheets' || storageType === 'googlesheet' || storageType === 'composite') {
             config.leadsStorage.type = storageType as any;
         }
+    }
+
+    // Inicializar sub-objeto authStorage si no existe
+    if (!config.authStorage) {
+        config.authStorage = {
+            type: 'file',
+            authDir: './auth_info',
+            bucketName: 'whatsapp-bot-auth'
+        };
+    }
+
+    if (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER) {
+        const authType = (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || '').toLowerCase().trim();
+        if (authType === 'file' || authType === 'google' || authType === 'gcs') {
+            config.authStorage.type = authType as any;
+        }
+    }
+
+    if (process.env.GCS_BUCKET_NAME || process.env.GOOGLE_STORAGE_BUCKET) {
+        config.authStorage.bucketName = process.env.GCS_BUCKET_NAME || process.env.GOOGLE_STORAGE_BUCKET;
+    }
+
+    if (process.env.AUTH_DIR) {
+        config.authStorage.authDir = process.env.AUTH_DIR;
     }
 
     // Inicializar sub-objeto googleSheets si no existe

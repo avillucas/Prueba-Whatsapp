@@ -74,3 +74,88 @@
 [2026-08-14T15:50:03.498Z] [WhatsAppAdapter] INFO: Sesión finalizada manualmente por usuario 5491135204880@s.whatsapp.net
 [2026-08-14T15:50:04.198Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
 [2026-08-14T15:50:04.256Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-15T01:28:35.270Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:28:35.286Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-15T01:28:35.293Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-15T01:28:35.295Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-15T01:28:35.296Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-15T01:28:35.297Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786757315224). Guardando el Lead.
+[2026-08-15T01:28:35.307Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786757315224)
+[2026-08-15T01:28:35.323Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:28:35.324Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786757315320)
+[2026-08-15T01:28:35.346Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:28:35.551Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-15T01:28:35.550Z","s1","Test","","",""]
+[2026-08-15T01:28:35.552Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-15T01:28:35.552Z","s2","Test","","",""]
+[2026-08-15T01:28:35.787Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-15T01:28:35.839Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-15T01:36:07.847Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-15T01:36:07.991Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-15T01:36:08.063Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-15T01:36:08.062Z","s1","Test","","",""]
+[2026-08-15T01:36:08.064Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-15T01:36:08.064Z","s2","Test","","",""]
+[2026-08-15T01:36:08.911Z] [FileAuthAdapter] INFO: Directorio de sesión './auth_info' creado localmente.
+[2026-08-15T01:36:08.959Z] [WhatsAppAdapter] INFO: Conexión establecida con éxito.
+[2026-08-15T01:36:08.960Z] [WhatsAppAdapter] INFO: Conexión cerrada. Reconectando: false
+[2026-08-15T01:36:08.961Z] [WhatsAppAdapter] INFO: Sesión deslogueada. Borra la carpeta auth_info para escaneo de nuevo QR.
+[2026-08-15T01:36:08.967Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:36:08.969Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:36:08.974Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:36:08.975Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Hola"
+[2026-08-15T01:36:08.975Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-15T01:36:08.976Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-15T01:36:08.978Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204878_ad5b9d_mstpfy1e para 5491135204878@s.whatsapp.net
+[2026-08-15T01:36:08.978Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-15T01:36:08.979Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204878@s.whatsapp.net
+[2026-08-15T01:36:08.980Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-15T01:36:08.980Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "A"
+[2026-08-15T01:36:08.981Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786757768940). Guardando el Lead.
+[2026-08-15T01:36:08.981Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-15T01:36:08.982Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204878@s.whatsapp.net: "Lucas Avila"
+[2026-08-15T01:36:08.983Z] [WhatsAppAdapter] INFO: Auto-completando 'Telefono_WhatsApp' para 5491135204878@s.whatsapp.net con valor: "5491135204878"
+[2026-08-15T01:36:08.983Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204878@s.whatsapp.net (Nodo: FIN)
+[2026-08-15T01:36:08.983Z] [WhatsAppAdapter] INFO: Fin de flujo alcanzado para 5491135204878_ad5b9d_mstpfy1e. Guardando Lead...
+[2026-08-15T01:36:08.984Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786757768940)
+[2026-08-15T01:36:08.988Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:36:08.994Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "Hola"
+[2026-08-15T01:36:08.996Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204879_ad5b9d_mstpfy1w para 5491135204879@s.whatsapp.net
+[2026-08-15T01:36:08.996Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204879@s.whatsapp.net
+[2026-08-15T01:36:08.996Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "A"
+[2026-08-15T01:36:08.997Z] [WhatsAppAdapter] INFO: Enviando respuesta a 5491135204879@s.whatsapp.net (Nodo: NODE_NAME)
+[2026-08-15T01:36:08.997Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204879@s.whatsapp.net: "123"
+[2026-08-15T01:36:08.997Z] [WhatsAppAdapter] INFO: Validación fallida para 5491135204879@s.whatsapp.net (Campo: Nombre_y_Apellido): "123"
+[2026-08-15T01:36:09.004Z] [FileAuthAdapter] INFO: Usando directorio de sesión local existente './auth_info'.
+[2026-08-15T01:36:09.005Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "Hola"
+[2026-08-15T01:36:09.006Z] [WhatsAppAdapter] INFO: Nueva sesión iniciada: 5491135204880_ad5b9d_mstpfy26 para 5491135204880@s.whatsapp.net
+[2026-08-15T01:36:09.007Z] [WhatsAppAdapter] INFO: Enviando menú inicial a 5491135204880@s.whatsapp.net
+[2026-08-15T01:36:09.007Z] [WhatsAppAdapter] INFO: Mensaje recibido de 5491135204880@s.whatsapp.net: "salir"
+[2026-08-15T01:36:09.008Z] [WhatsAppAdapter] INFO: Sesión finalizada manualmente por usuario 5491135204880@s.whatsapp.net
+[2026-08-15T01:36:09.009Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:36:09.010Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786757768994)
+[2026-08-15T01:36:09.018Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:37:09.844Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:37:09.848Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-15T01:37:09.848Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-15T01:37:09.850Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-15T01:37:09.851Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-15T01:37:09.852Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786757829826). Guardando el Lead.
+[2026-08-15T01:37:09.853Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786757829826)
+[2026-08-15T01:37:09.862Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:37:09.863Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786757829859)
+[2026-08-15T01:37:09.873Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:37:10.265Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-15T01:37:10.264Z","s1","Test","","",""]
+[2026-08-15T01:37:10.266Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-15T01:37:10.266Z","s2","Test","","",""]
+[2026-08-15T01:37:10.491Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-15T01:37:10.531Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)
+[2026-08-15T01:42:49.785Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:42:49.790Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Opcion_Elegida', valor: 'A' }
+[2026-08-15T01:42:49.790Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Telefono_WhatsApp'
+[2026-08-15T01:42:49.792Z] [ConsoleAdapter] INFO: Error de validación: El número de teléfono debe contener al menos 6 dígitos numéricos.
+[2026-08-15T01:42:49.793Z] [ConsoleAdapter] INFO: Dato extraído: { clave: 'Telefono_WhatsApp', valor: '+5491135204878' }
+[2026-08-15T01:42:49.793Z] [ConsoleAdapter] INFO: Fin de flujo detectado (console_1786758169768). Guardando el Lead.
+[2026-08-15T01:42:49.794Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786758169768)
+[2026-08-15T01:42:49.812Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:42:49.813Z] [ConsoleAdapter] INFO: Guardando datos recolectados (Lead) antes de salir (console_1786758169803)
+[2026-08-15T01:42:49.826Z] [ConsoleAdapter] INFO: Dato extraído esperado en el próximo paso: 'Opcion_Elegida'
+[2026-08-15T01:42:49.845Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'Contactos' -> Valores: ["2026-08-15T01:42:49.843Z","s1","Test","","",""]
+[2026-08-15T01:42:49.850Z] [GoogleSheetsAdapter] INFO: DRY RUN: Hoja 'ListaEspera' -> Valores: ["2026-08-15T01:42:49.849Z","s2","Test","","",""]
+[2026-08-15T01:42:49.972Z] [GoogleSheetsAdapter] INFO: Fila agregada via Webhook en 'Sheet1'
+[2026-08-15T01:42:50.048Z] [GoogleSheetsAdapter] INFO: Fila guardada exitosamente en Google Sheets (Contactos)

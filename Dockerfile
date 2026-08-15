@@ -5,11 +5,7 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# 1. Copiamos motorDecision y lo compilamos primero para generar los tipos y dist
-COPY motorDecision ./motorDecision
-RUN cd ./motorDecision && npm install && npm run build
-
-# 2. Copiamos los archivos de configuración y dependencias de la app principal
+# 1. Copiamos los archivos de configuración y dependencias de la app principal
 COPY package.json tsconfig.json jest.config.js ./
 
 # 3. Instalamos dependencias de la app principal
@@ -27,9 +23,6 @@ FROM node:20-alpine AS runner
 RUN apk add --no-cache git
 
 WORKDIR /app
-
-# Copiamos motorDecision compilado desde la etapa de construcción
-COPY --from=builder /app/motorDecision ./motorDecision
 
 # Copiamos package.json
 COPY package.json ./

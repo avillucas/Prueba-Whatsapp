@@ -3,6 +3,7 @@ import { JsonFlowAdapter } from 'motor-decision';
 import { ConsoleAdapter } from './infrastructure/adapters/ConsoleAdapter';
 import { WhatsAppAdapter } from './infrastructure/adapters/WhatsAppAdapter';
 import { LeadRepositoryFactory } from './infrastructure/repositories/LeadRepositoryFactory';
+import { AuthStorageFactory } from './infrastructure/adapters/auth/AuthStorageFactory';
 import * as path from 'path';
 
 async function main() {
@@ -34,11 +35,14 @@ async function main() {
     // Instancia el LeadRepository usando el patrón Factory (por defecto 'csv', o 'google_sheets' / 'googlesheet')
     const leadRepo = LeadRepositoryFactory.create(config.leadsStorage.type, config);
 
+    // Instancia el AuthStorageAdapter usando el patrón Factory (por defecto 'file', o 'google' / 'gcs')
+    const authStorage = AuthStorageFactory.create(config.authStorage?.type, config);
+
     if (config.interface === 'command') {
         const adapter = new ConsoleAdapter(flowProvider, leadRepo);
         adapter.start();
     } else if (config.interface === 'baileys') {
-        const adapter = new WhatsAppAdapter(flowProvider, leadRepo);
+        const adapter = new WhatsAppAdapter(flowProvider, leadRepo, authStorage);
         await adapter.start();
     } else {
         console.error(`Interface '${config.interface}' no configurada correctamente.`);

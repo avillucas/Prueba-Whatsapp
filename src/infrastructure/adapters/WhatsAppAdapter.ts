@@ -8,6 +8,9 @@ import { SessionIdGenerator } from '../utils/SessionIdGenerator';
 import { LeadRepository } from '../../domain/LeadRepository';
 import { ErrorHandler } from '../logging/ErrorHandler';
 
+import { AuthStorageAdapter } from '../../domain/AuthStorageAdapter';
+import { AuthStorageFactory } from './auth/AuthStorageFactory';
+
 // Interfaz para mantener el estado de la conversación activa por usuario
 interface ActiveSession {
   sessionId: string; // El ID generado con MAC y Timestamp
@@ -18,14 +21,17 @@ export class WhatsAppAdapter {
   private activeSessions = new Map<string, ActiveSession>(); // remoteJid -> Session
   private leadManager: SessionLeadManager;
   private flowProvider: FlowProvider;
+  private authStorage: AuthStorageAdapter;
 
-  constructor(flowProvider: FlowProvider, leadRepo: LeadRepository) {
+  constructor(flowProvider: FlowProvider, leadRepo: LeadRepository, authStorage?: AuthStorageAdapter) {
     this.leadManager = new SessionLeadManager(leadRepo);
     this.flowProvider = flowProvider;
+    this.authStorage = authStorage || AuthStorageFactory.create();
   }
 
   async start() {
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
+    await this.authStorage.beforeAuth();
+    const { state, saveCreds } = await useMultiFileAuthState(this.authStorage.getAuthDir());
     
     // Configuramos pino logger para evitar que ensucie la consola
     const logger = pino({ level: 'silent' }) as any;
@@ -36,7 +42,10 @@ export class WhatsAppAdapter {
       logger
     });
 
-    sock.ev.on('creds.update', saveCreds);
+    sock.ev.on('creds.update', async () => {
+      await saveCreds();
+      await this.authStorage.afterSaveCreds();
+    });
 
     sock.ev.on('connection.update', (update: any) => {
       const { connection, lastDisconnect, qr } = update;

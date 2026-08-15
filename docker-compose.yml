@@ -21,8 +21,8 @@ services:
 
   test:
     build:
-      context: ..
-      dockerfile: Prueba Whatsapp/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       target: builder
     container_name: whatsapp-bot-test
     volumes:

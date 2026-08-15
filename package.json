@@ -12,8 +12,9 @@
     "test": "jest"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.11.0",
     "@whiskeysockets/baileys": "^6.7.9",
-    "motor-decision": "file:./motorDecision",
+    "motor-decision": "git+https://github.com/avillucas/motorDecision.git",
     "pino": "^9.0.0",
     "qrcode-terminal": "^0.12.0"
   },

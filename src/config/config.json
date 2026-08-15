@@ -13,5 +13,10 @@
       "sheetContactoName": "Contactos",
       "sheetListaEsperaName": "ListaEspera"
     }
+  },
+  "authStorage": {
+    "type": "file",
+    "authDir": "./auth_info",
+    "bucketName": "whatsapp-bot-auth"
   }
 }
