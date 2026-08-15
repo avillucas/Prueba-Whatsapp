@@ -4,11 +4,11 @@ data/*.csv
 coverage/
 dist/
 motorDecision/
-data/system.log
-data/errors.log
+logs/
+logs/*.log
 cfp412-agente-08fbac2e71d0.json
 .env
-data/system.log
-data/system.log
 .gitignore
 .env.googlesheet
+data/errors.log
+data/system.log

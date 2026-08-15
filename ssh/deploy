@@ -4,7 +4,7 @@ set -e
 echo "🚀 Iniciando despliegue de producción del WhatsApp Bot (Docker CLI)..."
 
 # Asegurar que existan los directorios requeridos por los volúmenes
-mkdir -p auth_info data flows
+mkdir -p auth_info data flows logs
 
 # 0. Copiar versión distribuida de motorDecision desde ../motorDecision (ignorado por Git)
 if [ -d "../motorDecision" ]; then
@@ -37,6 +37,7 @@ docker run -d \
   --env-file .env \
   -v "$(pwd)/auth_info:/app/auth_info" \
   -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/logs:/app/logs" \
   -v "$(pwd)/flows:/app/flows" \
   -it \
   whatsapp-bot:latest

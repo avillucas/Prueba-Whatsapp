@@ -63,7 +63,7 @@ El sistema maneja su configuración centralizada a través de `src/config/config
 | Variable | Valores Posibles | Por Defecto | Descripción y Uso |
 | :--- | :--- | :--- | :--- |
 | `LOG_ADAPTER` *(o `LOG_TYPE`)* | `file` \| `gcp` (o `google`) \| `console` | `file` | **`LoggerFactory` / `ErrorHandler`**: Adaptador de logs (`file` para archivos locales rotativos `system.log`/`errors.log`, `gcp` para Cloud Logging, `console` para stdout). |
-| `LOG_DIR` | *path* | `./data` | **`FileLoggerAdapter`**: Directorio donde se guardan los logs si `LOG_ADAPTER=file`. |
+| `LOG_DIR` | *path* | `./logs` | **`FileLoggerAdapter`**: Directorio donde se guardan los logs si `LOG_ADAPTER=file`. |
 
 ### 5. Integración con Google Sheets
 

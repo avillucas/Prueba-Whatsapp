@@ -7,7 +7,7 @@ export class FileLoggerAdapter implements LoggerAdapter {
   private errorLogFilePath: string;
   private systemLogFilePath: string;
 
-  constructor(logDirectory: string = path.join(process.cwd(), 'data')) {
+  constructor(logDirectory: string = path.join(process.cwd(), 'logs')) {
     this.logDirectory = logDirectory;
     this.errorLogFilePath = path.join(this.logDirectory, 'errors.log');
     this.systemLogFilePath = path.join(this.logDirectory, 'system.log');

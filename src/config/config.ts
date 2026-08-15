@@ -137,7 +137,7 @@ export function loadConfig(): AppConfig {
     if (!config.loggingStorage) {
         config.loggingStorage = {
             type: 'file',
-            logDir: path.join(process.cwd(), 'data')
+            logDir: path.join(process.cwd(), 'logs')
         };
     }
 
