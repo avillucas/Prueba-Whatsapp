@@ -35,4 +35,31 @@ describe("ErrorHandler Logging Service", () => {
     const content = fs.readFileSync(systemFilePath, 'utf-8');
     expect(content).toContain("[SystemContext] INFO: Mensaje de información de sistema");
   });
+
+  it("Debería retornar el adaptador actual vía getAdapter", () => {
+    const adapter = ErrorHandler.getAdapter();
+    expect(adapter).toBeDefined();
+  });
+
+  it("Debería retornar cadena vacía en rutas si el adaptador no es FileLoggerAdapter", () => {
+    const mockAdapter = {
+      handleError: jest.fn(),
+      logSystem: jest.fn()
+    };
+    ErrorHandler.setAdapter(mockAdapter);
+
+    expect(ErrorHandler.getErrorLogFilePath()).toBe('');
+    expect(ErrorHandler.getSystemLogFilePath()).toBe('');
+  });
+
+  it("Debería re-instanciar FileLoggerAdapter al llamar setLogDirectory si el adaptador actual no es FileLoggerAdapter", () => {
+    const mockAdapter = {
+      handleError: jest.fn(),
+      logSystem: jest.fn()
+    };
+    ErrorHandler.setAdapter(mockAdapter);
+
+    ErrorHandler.setLogDirectory(testDir);
+    expect(ErrorHandler.getAdapter().constructor.name).toBe('FileLoggerAdapter');
+  });
 });

@@ -25,7 +25,8 @@ describe("Logging Adapters Suite", () => {
       expect(fs.existsSync(errorPath)).toBe(true);
 
       const content = fs.readFileSync(errorPath, 'utf-8');
-      expect(content).toContain("[FileContext] ERROR: Error en archivo local");
+      expect(content).toContain("[FileContext] ERROR:");
+      expect(content).toContain("Error en archivo local");
       expect(content).toContain('"id":456');
     });
 
@@ -60,6 +61,23 @@ describe("Logging Adapters Suite", () => {
       stderrSpy.mockRestore();
     });
 
+    it("debería manejar errores que no son instancias de Error y sin extraData", () => {
+      const adapter = new GCPLoggerAdapter();
+      const stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+      adapter.handleError("GCPContext", "String Error Test");
+
+      expect(stderrSpy).toHaveBeenCalled();
+      const output = stderrSpy.mock.calls[0][0] as string;
+      const parsed = JSON.parse(output);
+
+      expect(parsed.severity).toBe("ERROR");
+      expect(parsed.message).toContain("String Error Test");
+      expect(parsed.extraData).toBeUndefined();
+
+      stderrSpy.mockRestore();
+    });
+
     it("debería emitir JSON estructurado a process.stdout en logSystem", () => {
       const adapter = new GCPLoggerAdapter();
       const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
@@ -74,6 +92,22 @@ describe("Logging Adapters Suite", () => {
       expect(parsed.context).toBe("GCPContext");
       expect(parsed.message).toContain("Inicio de servicio GCP");
       expect(parsed.extraData).toEqual({ version: "1.0.0" });
+
+      stdoutSpy.mockRestore();
+    });
+
+    it("debería emitir logSystem sin extraData", () => {
+      const adapter = new GCPLoggerAdapter();
+      const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+
+      adapter.logSystem("GCPContext", "Mensaje sin extraData");
+
+      expect(stdoutSpy).toHaveBeenCalled();
+      const output = stdoutSpy.mock.calls[0][0] as string;
+      const parsed = JSON.parse(output);
+
+      expect(parsed.severity).toBe("INFO");
+      expect(parsed.extraData).toBeUndefined();
 
       stdoutSpy.mockRestore();
     });
