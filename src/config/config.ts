@@ -22,8 +22,9 @@ export interface FirestoreConfig {
 }
 
 export interface AuthStorageConfig {
-    type: 'redis' | 'firestore' | 'gcf';
+    type: 'redis' | 'firestore' | 'gcf' | 'google' | string;
     authDir?: string;
+    bucketName?: string;
     redis?: RedisConfig;
     firestore?: FirestoreConfig;
 }
@@ -106,13 +107,17 @@ export function loadConfig(): AppConfig {
 
     if (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER) {
         const authType = (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || '').toLowerCase().trim();
-        if (authType === 'redis' || authType === 'firestore' || authType === 'gcf' || authType === 'google_firestore') {
+        if (authType === 'redis' || authType === 'firestore' || authType === 'gcf' || authType === 'google_firestore' || authType === 'google') {
             config.authStorage.type = authType as any;
         }
     }
 
     if (process.env.AUTH_DIR) {
         config.authStorage.authDir = process.env.AUTH_DIR;
+    }
+
+    if (process.env.GCS_BUCKET_NAME) {
+        config.authStorage.bucketName = process.env.GCS_BUCKET_NAME;
     }
 
     if (!config.authStorage.redis) {
