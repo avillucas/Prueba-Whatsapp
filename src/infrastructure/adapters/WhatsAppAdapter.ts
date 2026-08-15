@@ -1,6 +1,7 @@
 import { makeWASocket, useMultiFileAuthState, DisconnectReason } from '@whiskeysockets/baileys';
 import * as qrcode from 'qrcode-terminal';
 import pino from 'pino';
+import * as fs from 'fs';
 import { Boom } from '@hapi/boom';
 import { DecisionEngine, FlowProvider } from 'motor-decision';
 import { SessionLeadManager } from '../../application/SessionLeadManager';
@@ -56,14 +57,28 @@ export class WhatsAppAdapter {
       }
 
       if (connection === 'close') {
-        const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-        ErrorHandler.logSystem('WhatsAppAdapter', `Conexión cerrada. Reconectando: ${shouldReconnect}`);
+        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        ErrorHandler.logSystem('WhatsAppAdapter', `Conexión cerrada. Status: ${statusCode || 'desconocido'}. Reintentando conexión...`);
         
-        if (shouldReconnect) {
-          this.start();
-        } else {
-          ErrorHandler.logSystem('WhatsAppAdapter', 'Sesión deslogueada. Borra la carpeta auth_info para escaneo de nuevo QR.');
+        if (isLoggedOut) {
+          ErrorHandler.logSystem('WhatsAppAdapter', 'Sesión deslogueada o inválida. Limpiando credenciales locales para generar nuevo QR...');
+          try {
+            const authDir = this.authStorage.getAuthDir();
+            if (fs.existsSync(authDir)) {
+              fs.rmSync(authDir, { recursive: true, force: true });
+              fs.mkdirSync(authDir, { recursive: true });
+            }
+          } catch (e: any) {
+            ErrorHandler.logSystem('WhatsAppAdapter', `Error al limpiar authDir: ${e.message}`);
+          }
         }
+        
+        setTimeout(() => {
+          this.start().catch((err) => {
+            ErrorHandler.handle('WhatsAppAdapter', err);
+          });
+        }, 2000);
       } else if (connection === 'open') {
         console.log('\n✅ ¡Bot de WhatsApp conectado y listo para recibir mensajes!\n');
         ErrorHandler.logSystem('WhatsAppAdapter', 'Conexión establecida con éxito.');

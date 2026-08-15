@@ -50,6 +50,8 @@ async function main() {
     } else if (config.interface === 'baileys') {
         const adapter = new WhatsAppAdapter(flowProvider, leadRepo, authStorage);
         await adapter.start();
+        // Mantener el proceso activo para evitar que el contenedor de Docker finalice
+        await new Promise(() => {});
     } else {
         console.error(`Interface '${config.interface}' no configurada correctamente.`);
         process.exit(1);

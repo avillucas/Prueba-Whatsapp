@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Iniciando Bot de WhatsApp con almacenamiento de sesión en Google Cloud Storage (GCS)..."
+
+# Asegurarse de que los directorios requeridos existan
+mkdir -p auth_info data flows
+
+# Construimos la imagen si no existe
+docker compose build whatsapp-bot
+
+# Si existe un archivo .env, pasamos la referencia.
+ENV_FILE_FLAG=""
+if [ -f ".env" ]; then
+    ENV_FILE_FLAG="--env-file .env"
+fi
+
+# Ejecutamos el contenedor con las variables para almacenamiento de sesión de WhatsApp en Google Cloud Storage (GCS)
+docker compose $ENV_FILE_FLAG run --rm -it \
+  --name whatsapp-storage \
+  -e INTERFACE=${INTERFACE:-baileys} \
+  -e FLOW_FILE=${FLOW_FILE:-flow_cfp412.json} \
+  -e AUTH_STORAGE_TYPE=google \
+  -e GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-whatsapp-bot-auth} \
+  whatsapp-bot
