@@ -91,7 +91,7 @@ describe("Domain Entities - Value Objects", () => {
 
   describe("LeadContacto y LeadListaEspera", () => {
     it("Debería poder instanciar un LeadContacto completo", () => {
-      const lead: import("../../domain/Lead").LeadContacto = {
+      const lead: LeadContacto = {
         nombre: "Lucas",
         telefono: new Telefono("54", "91122334455"),
         correoElectronico: new Email("lucas@ejemplo.com"),
@@ -105,7 +105,7 @@ describe("Domain Entities - Value Objects", () => {
     });
 
     it("Debería poder instanciar un LeadContacto parcial (abandonado)", () => {
-      const lead: import("../../domain/Lead").LeadContacto = {
+      const lead: LeadContacto = {
         nombre: "Lucas Parcial",
         mensaje: "Conversación cerrada antes de completar"
       };
@@ -116,7 +116,7 @@ describe("Domain Entities - Value Objects", () => {
     });
 
     it("Debería poder instanciar un LeadListaEspera completo", () => {
-      const lead: import("../../domain/Lead").LeadListaEspera = {
+      const lead: LeadListaEspera = {
         nombre: "Ana",
         telefono: new Telefono("54", "91199887766"),
         cursoDeInteres: "Electricidad del Automóvil"

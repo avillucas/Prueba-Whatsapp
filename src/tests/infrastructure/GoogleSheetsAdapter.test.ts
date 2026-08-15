@@ -3,7 +3,6 @@ import * as crypto from 'crypto';
 
 let httpResponseData = '';
 let httpStatusCode = 200;
-let lastPostData = '';
 
 jest.mock('https', () => ({
   request: (url: any, options: any, callback: any) => {
@@ -17,7 +16,7 @@ jest.mock('https', () => ({
     if (callback) callback(res);
     return {
       on: jest.fn(),
-      write: (d: string) => { lastPostData = d; },
+      write: jest.fn(),
       end: jest.fn()
     };
   }
@@ -33,7 +32,6 @@ describe("GoogleSheetsAdapter", () => {
   beforeEach(() => {
     httpResponseData = '{"access_token":"token123","values":[["val1"]]}';
     httpStatusCode = 200;
-    lastPostData = '';
   });
 
   it("Debería enviar datos via Webhook exitosamente", async () => {

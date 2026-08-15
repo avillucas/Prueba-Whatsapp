@@ -19,6 +19,7 @@ describe("Infrastructure Repositories & Adapters", () => {
   describe("CsvLeadRepository", () => {
     it("Debería crear el directorio y archivos CSV iniciales", () => {
       const repo = new CsvLeadRepository(testDataDir);
+      expect(repo).toBeDefined();
       expect(fs.existsSync(path.join(testDataDir, 'contactos.csv'))).toBe(true);
       expect(fs.existsSync(path.join(testDataDir, 'lista_espera.csv'))).toBe(true);
     });
