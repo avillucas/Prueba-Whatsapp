@@ -17,7 +17,7 @@ services:
         max-file: "3"
     restart: unless-stopped
     stdin_open: true # Equivalente a -i (interactivo)
-    tty: true        # Equivalente a -t (tty), necesario para qrcode-terminal
+    tty: true # Equivalente a -t (tty), necesario para qrcode-terminal
 
   test:
     build:
@@ -30,4 +30,3 @@ services:
       - ./flows:/app/flows
       - ./data:/app/data
     command: npm test
-
