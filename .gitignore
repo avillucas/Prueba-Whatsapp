@@ -6,3 +6,5 @@ dist/
 motorDecision/
 data/system.log
 data/errors.log
+cfp412-agente-08fbac2e71d0.json
+.env
