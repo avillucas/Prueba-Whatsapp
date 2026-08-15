@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "Iniciando linter (ESLint & TypeScript check) en entorno Docker..."
+
+# Asegurarse de que el directorio data exista para el montaje de volúmenes
+mkdir -p data
+
+# Construir la imagen usando el target builder
+docker compose build test
+
+# Ejecutar el linter en el contenedor temporal y eliminarlo al finalizar
+docker compose run --rm test npm run lint "$@"

@@ -21,18 +21,28 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # Si motor-decision está en un repositorio separado o submódulo, se clona o se emula para el build de npm
+      # Clonar y compilar la librería motorDecision desde GitHub si no se encuentra
       - name: Setup motor-decision dependency
         run: |
           if [ -d "../motorDecision" ]; then
-            echo "motorDecision local directory found."
+            echo "Copiando motorDecision desde el directorio superior..."
+            mkdir -p ./motorDecision
+            cp -r ../motorDecision/* ./motorDecision/
+          elif [ -d "motorDecision" ] && [ -f "motorDecision/package.json" ]; then
+            echo "motorDecision ya existe en la raíz."
           else
-            echo "Mocking motorDecision for CI pipeline..."
-            mkdir -p ../motorDecision
-            echo '{"name":"motor-decision","version":"1.0.0","main":"dist/index.js"}' > ../motorDecision/package.json
-            mkdir -p ../motorDecision/dist
-            echo 'exports.DecisionEngine = class {}; exports.FlowProvider = class {};' > ../motorDecision/dist/index.js
+            echo "Clonando motorDecision desde GitHub..."
+            git clone https://github.com/avillucas/motorDecision.git ./motorDecision
           fi
+
+          if [ -d "./motorDecision" ]; then
+            echo "Instalando dependencias y compilando motorDecision..."
+            cd ./motorDecision
+            npm install
+            npm run build
+            cd ..
+          fi
+
 
       - name: Install Dependencies
         run: npm install

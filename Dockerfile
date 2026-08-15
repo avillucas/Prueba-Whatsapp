@@ -5,8 +5,17 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# 1. Copiamos la librería motorDecision
-COPY motorDecision ./motorDecision
+# 1. Copiamos o clonamos la librería motorDecision desde GitHub si no existe
+COPY motorDecision* ./motorDecision/
+RUN if [ ! -f ./motorDecision/package.json ]; then \
+      echo "Clonando motorDecision desde GitHub..." && \
+      git clone https://github.com/avillucas/motorDecision.git ./motorDecision ; \
+    fi && \
+    if [ ! -d ./motorDecision/dist ]; then \
+      echo "Compilando motorDecision..." && \
+      cd ./motorDecision && npm install && npm run build ; \
+    fi
+
 
 # 2. Copiamos los archivos de configuración y dependencias de la app principal
 COPY package.json tsconfig.json jest.config.js ./
