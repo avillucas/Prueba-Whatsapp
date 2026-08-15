@@ -12,8 +12,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@google-cloud/storage": "^7.11.0",
+    "@google-cloud/firestore": "^7.10.0",
     "@whiskeysockets/baileys": "^6.7.9",
+    "ioredis": "^5.4.1",
     "motor-decision": "file:./motorDecision",
     "pino": "^9.0.0",
     "qrcode-terminal": "^0.12.0"

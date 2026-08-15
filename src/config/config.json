@@ -14,8 +14,14 @@
     }
   },
   "authStorage": {
-    "type": "file",
+    "type": "redis",
     "authDir": "./auth_info",
-    "bucketName": "whatsapp-bot-auth"
+    "redis": {
+      "host": "redis",
+      "port": 6379
+    },
+    "firestore": {
+      "collectionName": "whatsapp_auth"
+    }
   }
 }

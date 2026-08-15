@@ -1,10 +1,13 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando Bot de WhatsApp con almacenamiento de sesión en Google Cloud Storage (GCS)..."
+echo "🚀 Iniciando Bot de WhatsApp con almacenamiento de sesión NoSQL (Redis / Firestore)..."
 
 # Asegurarse de que los directorios requeridos existan
-mkdir -p auth_info data flows
+mkdir -p data flows
+
+# Levantamos el contenedor de Redis si no está activo
+docker compose up -d redis
 
 # Construimos la imagen si no existe
 docker compose build whatsapp-bot
@@ -15,11 +18,12 @@ if [ -f ".env" ]; then
     ENV_FILE_FLAG="--env-file .env"
 fi
 
-# Ejecutamos el contenedor con las variables para almacenamiento de sesión de WhatsApp en Google Cloud Storage (GCS)
+# Ejecutamos el contenedor con las variables para almacenamiento de sesión de WhatsApp
 docker compose $ENV_FILE_FLAG run --rm -it \
   --name whatsapp-storage \
   -e INTERFACE=${INTERFACE:-baileys} \
   -e FLOW_FILE=${FLOW_FILE:-flow_cfp412.json} \
-  -e AUTH_STORAGE_TYPE=google \
-  -e GCS_BUCKET_NAME=${GCS_BUCKET_NAME:-whatsapp-bot-auth} \
+  -e AUTH_STORAGE_TYPE=${AUTH_STORAGE_TYPE:-google_firestore} \
+  -e REDIS_HOST=redis \
+  -e REDIS_PORT=6379 \
   whatsapp-bot

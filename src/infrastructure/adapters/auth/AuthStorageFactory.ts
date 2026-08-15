@@ -1,39 +1,53 @@
 import { AuthStorageAdapter } from '../../../domain/AuthStorageAdapter';
-import { FileAuthAdapter } from './FileAuthAdapter';
-import { GoogleAuthAdapter } from './GoogleAuthAdapter';
+import { RedisAuthAdapter } from './RedisAuthAdapter';
+import { FirestoreAuthAdapter } from './FirestoreAuthAdapter';
 import { AppConfig } from '../../../config/config';
 
-export type AuthStorageType = 'file' | 'google' | 'gcs' | string;
+export type AuthStorageType = 'redis' | 'firestore' | 'gcf' | string;
 
 export class AuthStorageFactory {
   /**
    * Crea e instancia el AuthStorageAdapter adecuado según el tipo o variables de entorno.
-   * Por defecto usa 'file' (FileAuthAdapter).
+   * Entorno local: 'redis' (RedisAuthAdapter).
+   * Entorno producción: 'firestore' / 'gcf' (FirestoreAuthAdapter).
    *
-   * @param storageType Tipo de adaptador ('file' | 'google' | 'gcs'). Por defecto 'file'.
+   * @param storageType Tipo de adaptador ('redis' | 'firestore' | 'gcf').
    * @param config Configuración de la aplicación que incluye authStorage y credenciales.
    */
   public static create(storageType?: AuthStorageType, config?: AppConfig): AuthStorageAdapter {
-    const rawType = storageType || config?.authStorage?.type || process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || 'file';
+    const rawType = storageType || config?.authStorage?.type || process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || 'redis';
     const type = rawType.toLowerCase().trim();
 
-    const authDir = config?.authStorage?.authDir || process.env.AUTH_DIR || './auth_info';
-
-    if (type === 'google' || type === 'gcs') {
-      const bucketName = config?.authStorage?.bucketName || process.env.GCS_BUCKET_NAME || process.env.GOOGLE_STORAGE_BUCKET || 'whatsapp-bot-auth';
+    if (type === 'firestore' || type === 'gcf' || type === 'google_firestore') {
+      const collectionName = config?.authStorage?.firestore?.collectionName || process.env.FIRESTORE_COLLECTION_NAME || 'whatsapp_auth';
+      const projectId = config?.authStorage?.firestore?.projectId || process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
       const clientEmail = config?.leadsStorage?.googleSheets?.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
       const privateKey = config?.leadsStorage?.googleSheets?.privateKey || process.env.GOOGLE_PRIVATE_KEY;
+      const localDir = config?.authStorage?.authDir || process.env.AUTH_DIR || './auth_info';
 
-      return new GoogleAuthAdapter({
-        bucketName,
-        localDir: authDir,
+      return new FirestoreAuthAdapter({
+        collectionName,
+        projectId,
         clientEmail,
-        privateKey
+        privateKey,
+        localDir
       });
     }
 
-    // Por defecto usa FileAuthAdapter
-    return new FileAuthAdapter(authDir);
+    // Por defecto en desarrollo local usa RedisAuthAdapter
+    const host = config?.authStorage?.redis?.host || process.env.REDIS_HOST || 'localhost';
+    const port = config?.authStorage?.redis?.port || Number(process.env.REDIS_PORT) || 6379;
+    const password = config?.authStorage?.redis?.password || process.env.REDIS_PASSWORD;
+    const db = config?.authStorage?.redis?.db !== undefined ? config.authStorage.redis.db : Number(process.env.REDIS_DB || 0);
+    const localDir = config?.authStorage?.authDir || process.env.AUTH_DIR || './auth_info';
+
+    return new RedisAuthAdapter({
+      host,
+      port,
+      password,
+      db,
+      localDir
+    });
   }
 }
 

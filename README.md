@@ -1,6 +1,6 @@
 # Minimalist WhatsApp Bot con TypeScript y Docker
 
-Este es un bot minimalista para WhatsApp que responde "Hola Mundo!!!" a cualquier mensaje de texto recibido.
+Este es un bot minimalista para WhatsApp que responde según el árbol de decisiones conversacional definido.
 Utiliza `@whiskeysockets/baileys` para la conexión y está empaquetado con Docker para su fácil despliegue.
 
 ## Requisitos previos
@@ -10,22 +10,25 @@ Utiliza `@whiskeysockets/baileys` para la conexión y está empaquetado con Dock
 
 ## Cómo iniciar el proyecto
 
-1. En la raíz del proyecto, ejecuta el siguiente comando para construir y levantar el contenedor:
+1. En la raíz del proyecto, ejecuta el siguiente comando para construir y levantar el contenedor y sus servicios (incluyendo Redis):
    ```bash
    docker compose up --build
    ```
 
 2. En los logs de la consola aparecerá un código QR. Abre WhatsApp en tu teléfono, ve a **Dispositivos Vinculados** y escanea el QR.
-3. Una vez vinculado, verás el mensaje `¡Conectado exitosamente a WhatsApp!` en la consola.
-4. Si quieres dejar el bot corriendo en segundo plano y salir de la vista de logs de Docker, puedes presionar `Ctrl + C` o haberlo iniciado con `docker compose up -d` (aunque para la primera vinculación necesitas ver los logs).
+3. Una vez vinculado, verás el mensaje `¡Bot de WhatsApp conectado y listo para recibir mensajes!` en la consola.
+4. Si quieres dejar el bot corriendo en segundo plano y salir de la vista de logs de Docker, puedes presionar `Ctrl + C` o haberlo iniciado con `docker compose up -d`.
 5. Para ver los logs nuevamente puedes usar:
    ```bash
-   docker compose logs -f
+   docker compose logs -f whatsapp-bot
    ```
 
-## Estructura y Sesión
-- La sesión de vinculación persistirá en la carpeta local `./auth_info` (la cual se montará como volumen y se creará automáticamente la primera vez). 
-- Gracias a esto, no tendrás que escanear el QR cada vez que reinicias el bot o el contenedor.
+## Estructura y Persistencia de Sesión
+
+Para evitar la volatilidad del contenedor sin depender del sistema de archivos local, el almacenamiento de credenciales de sesión se gestiona con bases de datos NoSQL:
+
+- **Desarrollo Local (`redis`)**: La sesión se guarda en una instancia de **Redis** en Docker (`RedisAuthAdapter`). El servicio de Redis se levanta automáticamente vía Docker Compose.
+- **Producción (`firestore` / `gcf`)**: La sesión se guarda de forma persistente y distribuida en **Google Cloud Firestore** (`FirestoreAuthAdapter`).
 
 ## Variables de Configuración
 
@@ -44,13 +47,16 @@ El sistema maneja su configuración centralizada a través de `src/config/config
 | :--- | :--- | :--- | :--- |
 | `LEADS_STORAGE_TYPE` | `csv` \| `google_sheets` \| `composite` | `csv` | **`LeadRepositoryFactory`**: Estrategia de persistencia de contactos y listas de espera (`csv` local, `google_sheets` en la nube, o `composite` simultáneo). |
 
-### 3. Autenticación y Sesión de WhatsApp
+### 3. Autenticación y Sesión de WhatsApp (NoSQL)
 
 | Variable | Valores Posibles | Por Defecto | Descripción y Uso |
 | :--- | :--- | :--- | :--- |
-| `AUTH_STORAGE_TYPE` *(o `AUTH_ADAPTER`)* | `file` \| `google` (o `gcs`) | `file` | **`AuthStorageFactory` / `WhatsAppAdapter`**: Guarda y restaura las credenciales de WhatsApp (`file` en disco local / `google` en Google Cloud Storage). |
-| `AUTH_DIR` | *path* | `./auth_info` | **`FileAuthAdapter` / `GoogleAuthAdapter`**: Ruta del directorio local para almacenar/sincronizar credenciales de sesión. |
-| `GCS_BUCKET_NAME` *(o `GOOGLE_STORAGE_BUCKET`)* | *string* | `whatsapp-bot-auth` | **`GoogleAuthAdapter`**: Nombre del bucket en GCP para respaldo de sesión cuando `AUTH_STORAGE_TYPE=google`. |
+| `AUTH_STORAGE_TYPE` *(o `AUTH_ADAPTER`)* | `redis` \| `firestore` (o `gcf`) | `redis` | **`AuthStorageFactory`**: Selecciona el adaptador de sesión NoSQL (`redis` para desarrollo local / `firestore` para producción en GCP). |
+| `REDIS_HOST` | *string* | `localhost` / `redis` | **`RedisAuthAdapter`**: Host de Redis en entorno local. |
+| `REDIS_PORT` | *number* | `6379` | **`RedisAuthAdapter`**: Puerto de la base de datos Redis. |
+| `REDIS_PASSWORD` | *string* | *vacío* | **`RedisAuthAdapter`**: Contraseña de acceso a Redis (opcional). |
+| `FIRESTORE_COLLECTION_NAME` | *string* | `whatsapp_auth` | **`FirestoreAuthAdapter`**: Nombre de la colección en Firestore para credenciales de bot. |
+| `GCP_PROJECT_ID` | *string* | *auto* | **`FirestoreAuthAdapter`**: ID de proyecto GCP para Google Cloud Firestore. |
 
 ### 4. Sistema de Logs y Observabilidad
 
@@ -64,8 +70,8 @@ El sistema maneja su configuración centralizada a través de `src/config/config
 | Variable | Valores Posibles | Por Defecto | Descripción y Uso |
 | :--- | :--- | :--- | :--- |
 | `GOOGLE_SPREADSHEET_ID` | *string* | `""` | **`GoogleSheetsAdapter`**: ID de la hoja de cálculo de Google Sheets. |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | *email* | `""` | **`GoogleSheetsAdapter` / `GoogleAuthAdapter`**: Correo de la Service Account de Google Cloud. |
-| `GOOGLE_PRIVATE_KEY` | *string (RSA)* | `""` | **`GoogleSheetsAdapter` / `GoogleAuthAdapter`**: Clave privada RSA de la Service Account para autenticación JWT. |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | *email* | `""` | **`GoogleSheetsAdapter` / `FirestoreAuthAdapter`**: Correo de la Service Account de Google Cloud. |
+| `GOOGLE_PRIVATE_KEY` | *string (RSA)* | `""` | **`GoogleSheetsAdapter` / `FirestoreAuthAdapter`**: Clave privada RSA de la Service Account para autenticación JWT. |
 | `GOOGLE_SHEETS_TAB_CONTACTOS` | *string* | `Contactos` | **`GoogleSheetsLeadRepository`**: Nombre de la pestaña para guardar contactos. |
 | `GOOGLE_SHEETS_TAB_LISTA_ESPERA` | *string* | `ListaEspera` | **`GoogleSheetsLeadRepository`**: Nombre de la pestaña para guardar lista de espera. |
 
@@ -82,5 +88,3 @@ Para habilitar la conexión SSH y el despliegue automático, se utilizan los sig
 | **`GCP_VM_HOST`** | Dirección IP pública o nombre de dominio de la máquina virtual (VM) en GCP. |
 | **`GCP_VM_USERNAME`** | Usuario SSH de Linux en la VM de GCP (ej: `ubuntu` o `lucas`). |
 | **`GCP_VM_SSH_KEY`** | Clave privada SSH autorizada en la VM para autenticación automatizada. |
-
-

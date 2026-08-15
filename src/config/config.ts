@@ -9,10 +9,23 @@ export interface GoogleSheetsConfig {
     sheetListaEsperaName?: string;
 }
 
+export interface RedisConfig {
+    host?: string;
+    port?: number;
+    password?: string;
+    db?: number;
+}
+
+export interface FirestoreConfig {
+    collectionName?: string;
+    projectId?: string;
+}
+
 export interface AuthStorageConfig {
-    type: 'file' | 'google' | 'gcs';
+    type: 'redis' | 'firestore' | 'gcf';
     authDir?: string;
-    bucketName?: string;
+    redis?: RedisConfig;
+    firestore?: FirestoreConfig;
 }
 
 export interface LoggingConfig {
@@ -54,9 +67,15 @@ export function loadConfig(): AppConfig {
                 }
             },
             authStorage: {
-                type: 'file',
+                type: 'redis',
                 authDir: './auth_info',
-                bucketName: 'whatsapp-bot-auth'
+                redis: {
+                    host: 'redis',
+                    port: 6379
+                },
+                firestore: {
+                    collectionName: 'whatsapp_auth'
+                }
             }
         };
     }
@@ -80,26 +99,34 @@ export function loadConfig(): AppConfig {
     // Inicializar sub-objeto authStorage si no existe
     if (!config.authStorage) {
         config.authStorage = {
-            type: 'file',
-            authDir: './auth_info',
-            bucketName: 'whatsapp-bot-auth'
+            type: 'redis',
+            authDir: './auth_info'
         };
     }
 
     if (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER) {
         const authType = (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || '').toLowerCase().trim();
-        if (authType === 'file' || authType === 'google' || authType === 'gcs') {
+        if (authType === 'redis' || authType === 'firestore' || authType === 'gcf' || authType === 'google_firestore') {
             config.authStorage.type = authType as any;
         }
-    }
-
-    if (process.env.GCS_BUCKET_NAME || process.env.GOOGLE_STORAGE_BUCKET) {
-        config.authStorage.bucketName = process.env.GCS_BUCKET_NAME || process.env.GOOGLE_STORAGE_BUCKET;
     }
 
     if (process.env.AUTH_DIR) {
         config.authStorage.authDir = process.env.AUTH_DIR;
     }
+
+    if (!config.authStorage.redis) {
+        config.authStorage.redis = {};
+    }
+    config.authStorage.redis.host = process.env.REDIS_HOST || config.authStorage.redis.host || 'redis';
+    config.authStorage.redis.port = Number(process.env.REDIS_PORT) || config.authStorage.redis.port || 6379;
+    config.authStorage.redis.password = process.env.REDIS_PASSWORD || config.authStorage.redis.password;
+
+    if (!config.authStorage.firestore) {
+        config.authStorage.firestore = {};
+    }
+    config.authStorage.firestore.collectionName = process.env.FIRESTORE_COLLECTION_NAME || config.authStorage.firestore.collectionName || 'whatsapp_auth';
+    config.authStorage.firestore.projectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || config.authStorage.firestore.projectId;
 
     // Inicializar sub-objeto loggingStorage si no existe
     if (!config.loggingStorage) {

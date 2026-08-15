@@ -1,31 +1,66 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { FileAuthAdapter } from '../../infrastructure/adapters/auth/FileAuthAdapter';
-import { GoogleAuthAdapter } from '../../infrastructure/adapters/auth/GoogleAuthAdapter';
+import { RedisAuthAdapter } from '../../infrastructure/adapters/auth/RedisAuthAdapter';
+import { FirestoreAuthAdapter } from '../../infrastructure/adapters/auth/FirestoreAuthAdapter';
 import { AuthStorageFactory } from '../../infrastructure/adapters/auth/AuthStorageFactory';
 
-const mockDownload = jest.fn().mockResolvedValue(undefined);
-const mockUpload = jest.fn().mockResolvedValue(undefined);
-const mockGetFiles = jest.fn().mockResolvedValue([
-  [
-    { name: 'auth_info/creds.json', download: mockDownload },
-    { name: 'auth_info/session-1.json', download: mockDownload },
-    { name: 'auth_info/', download: mockDownload } // Prefijo vacío para probar filtro
+// Mocks de ioredis
+const mockHgetall = jest.fn().mockResolvedValue({});
+const mockHset = jest.fn().mockResolvedValue(1);
+const mockHdel = jest.fn().mockResolvedValue(1);
+const mockPipelineExec = jest.fn().mockResolvedValue([]);
+const mockPipeline = jest.fn().mockImplementation(() => ({
+  hset: mockHset,
+  hdel: mockHdel,
+  exec: mockPipelineExec
+}));
+const mockConnect = jest.fn().mockResolvedValue(undefined);
+const mockQuit = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('ioredis', () => {
+  return jest.fn().mockImplementation(() => ({
+    status: 'wait',
+    connect: mockConnect,
+    hgetall: mockHgetall,
+    pipeline: mockPipeline,
+    quit: mockQuit
+  }));
+});
+
+// Mocks de @google-cloud/firestore
+const mockDocGet = jest.fn().mockResolvedValue({
+  data: () => ({ content: '{"me":"test"}' })
+});
+const mockBatchSet = jest.fn();
+const mockBatchDelete = jest.fn();
+const mockBatchCommit = jest.fn().mockResolvedValue(undefined);
+
+const mockCollectionGet = jest.fn().mockResolvedValue({
+  empty: false,
+  docs: [
+    { id: 'creds.json', data: () => ({ content: '{"me":"test"}' }), ref: 'docRef1' }
   ]
-]);
+});
 
-const mockBucket = {
-  getFiles: mockGetFiles,
-  upload: mockUpload
-};
+const mockCollection = jest.fn().mockImplementation(() => ({
+  get: mockCollectionGet,
+  doc: jest.fn(() => ({ get: mockDocGet }))
+}));
 
-jest.mock('@google-cloud/storage', () => {
+const mockBatch = jest.fn().mockImplementation(() => ({
+  set: mockBatchSet,
+  delete: mockBatchDelete,
+  commit: mockBatchCommit
+}));
+
+jest.mock('@google-cloud/firestore', () => {
   return {
-    Storage: jest.fn().mockImplementation(() => ({
-      bucket: jest.fn(() => mockBucket)
+    Firestore: jest.fn().mockImplementation(() => ({
+      collection: mockCollection,
+      batch: mockBatch
     }))
   };
-}, { virtual: true });
+});
 
 describe('Auth Storage Adapters Suite', () => {
   const testAuthDir = path.resolve(__dirname, 'temp_test_auth_info');
@@ -37,74 +72,65 @@ describe('Auth Storage Adapters Suite', () => {
     }
   });
 
-  describe('FileAuthAdapter', () => {
-    it('debería crear el directorio de autenticación si no existe', async () => {
-      const adapter = new FileAuthAdapter(testAuthDir);
-      expect(fs.existsSync(testAuthDir)).toBe(false);
+  describe('RedisAuthAdapter', () => {
+    it('debería descargar archivos desde Redis antes de autenticar', async () => {
+      mockHgetall.mockResolvedValueOnce({
+        'creds.json': '{"me":"test"}'
+      });
+
+      const adapter = new RedisAuthAdapter({
+        host: 'localhost',
+        port: 6379,
+        localDir: testAuthDir
+      });
 
       await adapter.beforeAuth();
 
-      expect(fs.existsSync(testAuthDir)).toBe(true);
+      expect(mockConnect).toHaveBeenCalled();
+      expect(mockHgetall).toHaveBeenCalled();
+      expect(fs.existsSync(path.join(testAuthDir, 'creds.json'))).toBe(true);
       expect(adapter.getAuthDir()).toBe(testAuthDir);
     });
 
-    it('debería usar directorio existente si ya fue creado', async () => {
-      fs.mkdirSync(testAuthDir, { recursive: true });
-      const adapter = new FileAuthAdapter(testAuthDir);
+    it('debería manejar el caso cuando Redis no tiene credenciales', async () => {
+      mockHgetall.mockResolvedValueOnce({});
+      const adapter = new RedisAuthAdapter({ localDir: testAuthDir });
+
       await adapter.beforeAuth();
-      expect(fs.existsSync(testAuthDir)).toBe(true);
+      expect(mockHgetall).toHaveBeenCalled();
     });
 
-    it('debería ejecutar afterSaveCreds sin lanzar errores', async () => {
-      const adapter = new FileAuthAdapter(testAuthDir);
-      await adapter.beforeAuth();
-      await expect(adapter.afterSaveCreds()).resolves.not.toThrow();
+    it('debería sincronizar archivos locales con Redis en afterSaveCreds', async () => {
+      const adapter = new RedisAuthAdapter({ localDir: testAuthDir });
+      fs.mkdirSync(testAuthDir, { recursive: true });
+      fs.writeFileSync(path.join(testAuthDir, 'creds.json'), '{"me":"test"}');
+
+      await adapter.afterSaveCreds();
+
+      expect(mockPipeline).toHaveBeenCalled();
+      expect(mockHset).toHaveBeenCalledWith('whatsapp_auth', 'creds.json', '{"me":"test"}');
+      expect(mockPipelineExec).toHaveBeenCalled();
     });
   });
 
-  describe('GoogleAuthAdapter', () => {
-    it('debería descargar archivos desde GCS antes de autenticar', async () => {
-      const adapter = new GoogleAuthAdapter({
-        bucketName: 'test-bucket',
-        localDir: testAuthDir,
-        prefix: 'auth_info',
-        clientEmail: 'service@test.iam.gserviceaccount.com',
-        privateKey: '-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----'
+  describe('FirestoreAuthAdapter', () => {
+    it('debería descargar archivos desde Firestore antes de autenticar', async () => {
+      const adapter = new FirestoreAuthAdapter({
+        collectionName: 'whatsapp_auth',
+        localDir: testAuthDir
       });
 
       await adapter.beforeAuth();
 
-      expect(mockGetFiles).toHaveBeenCalledWith({ prefix: 'auth_info/' });
-      expect(mockDownload).toHaveBeenCalled();
+      expect(mockCollectionGet).toHaveBeenCalled();
+      expect(fs.existsSync(path.join(testAuthDir, 'creds.json'))).toBe(true);
       expect(adapter.getAuthDir()).toBe(testAuthDir);
     });
 
-    it('debería manejar el caso cuando GCS no tiene archivos previos', async () => {
-      mockGetFiles.mockResolvedValueOnce([[]]);
-      const adapter = new GoogleAuthAdapter({
-        bucketName: 'test-bucket',
+    it('debería guardar credenciales en Firestore en afterSaveCreds', async () => {
+      const adapter = new FirestoreAuthAdapter({
+        collectionName: 'whatsapp_auth',
         localDir: testAuthDir
-      });
-
-      await adapter.beforeAuth();
-      expect(mockGetFiles).toHaveBeenCalled();
-    });
-
-    it('debería capturar errores al descargar de GCS sin lanzar excepción', async () => {
-      mockGetFiles.mockRejectedValueOnce(new Error('GCS Error Network'));
-      const adapter = new GoogleAuthAdapter({
-        bucketName: 'test-bucket',
-        localDir: testAuthDir
-      });
-
-      await expect(adapter.beforeAuth()).resolves.not.toThrow();
-    });
-
-    it('debería subir los archivos locales a GCS después de guardar credenciales', async () => {
-      const adapter = new GoogleAuthAdapter({
-        bucketName: 'test-bucket',
-        localDir: testAuthDir,
-        prefix: 'auth_info'
       });
 
       fs.mkdirSync(testAuthDir, { recursive: true });
@@ -112,51 +138,36 @@ describe('Auth Storage Adapters Suite', () => {
 
       await adapter.afterSaveCreds();
 
-      expect(mockUpload).toHaveBeenCalledWith(
-        path.join(testAuthDir, 'creds.json'),
-        expect.objectContaining({ destination: 'auth_info/creds.json' })
-      );
-    });
-
-    it('debería manejar errores al subir a GCS', async () => {
-      mockUpload.mockRejectedValueOnce(new Error('Upload error'));
-      const adapter = new GoogleAuthAdapter({
-        bucketName: 'test-bucket',
-        localDir: testAuthDir
-      });
-
-      fs.mkdirSync(testAuthDir, { recursive: true });
-      fs.writeFileSync(path.join(testAuthDir, 'creds.json'), '{"me":"test"}');
-
-      await expect(adapter.afterSaveCreds()).resolves.not.toThrow();
+      expect(mockBatch).toHaveBeenCalled();
+      expect(mockBatchCommit).toHaveBeenCalled();
     });
   });
 
   describe('AuthStorageFactory', () => {
-    it('debería retornar FileAuthAdapter por defecto si no se especifica tipo', () => {
+    it('debería retornar RedisAuthAdapter por defecto si no se especifica tipo', () => {
       const adapter = AuthStorageFactory.create();
-      expect(adapter).toBeInstanceOf(FileAuthAdapter);
+      expect(adapter).toBeInstanceOf(RedisAuthAdapter);
     });
 
-    it("debería retornar FileAuthAdapter cuando tipo es 'file'", () => {
-      const adapter = AuthStorageFactory.create('file');
-      expect(adapter).toBeInstanceOf(FileAuthAdapter);
+    it("debería retornar RedisAuthAdapter cuando el tipo es 'redis'", () => {
+      const adapter = AuthStorageFactory.create('redis');
+      expect(adapter).toBeInstanceOf(RedisAuthAdapter);
     });
 
-    it("debería retornar GoogleAuthAdapter cuando tipo es 'google' o 'gcs'", () => {
-      const adapterGoogle = AuthStorageFactory.create('google');
-      expect(adapterGoogle).toBeInstanceOf(GoogleAuthAdapter);
+    it("debería retornar FirestoreAuthAdapter cuando el tipo es 'firestore' o 'gcf'", () => {
+      const adapterFirestore = AuthStorageFactory.create('firestore');
+      expect(adapterFirestore).toBeInstanceOf(FirestoreAuthAdapter);
 
-      const adapterGcs = AuthStorageFactory.create('gcs');
-      expect(adapterGcs).toBeInstanceOf(GoogleAuthAdapter);
+      const adapterGcf = AuthStorageFactory.create('gcf');
+      expect(adapterGcf).toBeInstanceOf(FirestoreAuthAdapter);
     });
 
     it('debería respetar las variables de entorno para seleccionar el adaptador', () => {
       const originalEnv = process.env.AUTH_STORAGE_TYPE;
-      process.env.AUTH_STORAGE_TYPE = 'google';
+      process.env.AUTH_STORAGE_TYPE = 'firestore';
 
       const adapter = AuthStorageFactory.create();
-      expect(adapter).toBeInstanceOf(GoogleAuthAdapter);
+      expect(adapter).toBeInstanceOf(FirestoreAuthAdapter);
 
       process.env.AUTH_STORAGE_TYPE = originalEnv;
     });

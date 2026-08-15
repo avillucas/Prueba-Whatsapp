@@ -1,13 +1,26 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: whatsapp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
   whatsapp-bot:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: whatsapp-bot
+    depends_on:
+      - redis
     env_file:
       - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
-      - ./auth_info:/app/auth_info
       - ./data:/app/data
       - ./flows:/app/flows
     logging:
@@ -25,8 +38,13 @@ services:
       dockerfile: Dockerfile
       target: builder
     container_name: whatsapp-bot-test
+    depends_on:
+      - redis
     volumes:
       - ./src:/app/src
       - ./flows:/app/flows
       - ./data:/app/data
     command: npm test
+
+volumes:
+  redis_data:
