@@ -215,7 +215,8 @@ describe("WhatsAppAdapter", () => {
       }]
     });
 
-    expect(mockSock.sendMessage).toHaveBeenCalledWith(expectedPhoneJid, { text: "Menú Principal" }, expect.anything());
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(lidJid, { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has(expectedPhoneJid)).toBe(true);
   });
 
   it("Debería resolver JID usando remoteJidAlt, participantAlt, participant, caché o signalRepository", async () => {
@@ -240,7 +241,8 @@ describe("WhatsAppAdapter", () => {
         message: { extendedTextMessage: { text: "Hola" } }
       }]
     });
-    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491111111111@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("100@lid", { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has("5491111111111@s.whatsapp.net")).toBe(true);
 
     // 2. Probar participantAlt
     await upsertHandler({
@@ -250,7 +252,8 @@ describe("WhatsAppAdapter", () => {
         message: { buttonsResponseMessage: { selectedButtonId: "Hola" } }
       }]
     });
-    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491122222222@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("200@lid", { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has("5491122222222@s.whatsapp.net")).toBe(true);
 
     // 3. Probar participant
     await upsertHandler({
@@ -260,7 +263,8 @@ describe("WhatsAppAdapter", () => {
         message: { ephemeralMessage: { message: { conversation: "Hola" } } }
       }]
     });
-    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491133333333@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("300@lid", { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has("5491133333333@s.whatsapp.net")).toBe(true);
 
     // 4. Probar caché lidMap previo para "100@lid" sin alt metadata
     await upsertHandler({
@@ -270,7 +274,7 @@ describe("WhatsAppAdapter", () => {
         message: { conversation: "A" }
       }]
     });
-    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491111111111@s.whatsapp.net", { text: "Ingrese Nombre" }, expect.anything());
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("100@lid", { text: "Ingrese Nombre" }, expect.anything());
 
     // 5. Probar signalRepository
     await upsertHandler({
@@ -281,7 +285,8 @@ describe("WhatsAppAdapter", () => {
       }]
     });
     expect(getPNForLIDMock).toHaveBeenCalledWith("400@lid");
-    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491199999999@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("400@lid", { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has("5491199999999@s.whatsapp.net")).toBe(true);
 
     // 6. Fallback a rawJid cuando no hay forma de resolver
     getPNForLIDMock.mockResolvedValueOnce(undefined);

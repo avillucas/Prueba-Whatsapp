@@ -16,5 +16,10 @@ docker rm -f whatsapp-service 2>/dev/null || true
 
 # Ejecutamos un contenedor temporal con la variable de entorno INTERFACE=baileys
 # --name asigna un nombre distintivo al contenedor para evitar colisiones
-docker compose run --rm --name whatsapp-service -e INTERFACE=baileys -e FLOW_FILE=flow_cfp412.json whatsapp-bot
+docker compose run --rm --name whatsapp-service \
+  -e INTERFACE=${INTERFACE:-baileys} \
+  -e FLOW_FILE=${FLOW_FILE:-flow_cfp412.json} \
+  -e LEADS_STORAGE_TYPE=${LEADS_STORAGE_TYPE:-csv} \
+  whatsapp-bot
+
 
