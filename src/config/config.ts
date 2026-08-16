@@ -61,7 +61,7 @@ export function loadConfig(): AppConfig {
             flowFile: 'flow_cfp412.json',
             leadsStorage: {
                 type: 'csv',
-                filePath: 'data/leads.csv',
+                filePath: 'data',
                 googleSheets: {
                     sheetContactoName: 'Contactos',
                     sheetListaEsperaName: 'ListaEspera'

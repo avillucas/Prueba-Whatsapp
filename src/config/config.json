@@ -4,7 +4,7 @@
   "flowFile": "flow_cfp412.json",
   "leadsStorage": {
     "type": "csv",
-    "filePath": "data/leads.csv",
+    "filePath": "data",
     "googleSheets": {
       "spreadsheetId": "",
       "clientEmail": "",
