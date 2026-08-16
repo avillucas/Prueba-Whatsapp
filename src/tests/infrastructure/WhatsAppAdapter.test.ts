@@ -217,4 +217,81 @@ describe("WhatsAppAdapter", () => {
 
     expect(mockSock.sendMessage).toHaveBeenCalledWith(expectedPhoneJid, { text: "Menú Principal" }, expect.anything());
   });
+
+  it("Debería resolver JID usando remoteJidAlt, participantAlt, participant, caché o signalRepository", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    
+    // Configurar signalRepository mock
+    const getPNForLIDMock = jest.fn().mockResolvedValue("5491199999999@s.whatsapp.net");
+    (mockSock as any).signalRepository = {
+      lidMapping: {
+        getPNForLID: getPNForLIDMock
+      }
+    };
+
+    await adapter.start();
+    const upsertHandler = eventListeners['messages.upsert'];
+
+    // 1. Probar remoteJidAlt
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: "100@lid", remoteJidAlt: "5491111111111@s.whatsapp.net" },
+        message: { extendedTextMessage: { text: "Hola" } }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491111111111@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+
+    // 2. Probar participantAlt
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: "200@lid", participantAlt: "5491122222222@s.whatsapp.net" },
+        message: { buttonsResponseMessage: { selectedButtonId: "Hola" } }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491122222222@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+
+    // 3. Probar participant
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: "300@lid", participant: "5491133333333@s.whatsapp.net" },
+        message: { ephemeralMessage: { message: { conversation: "Hola" } } }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491133333333@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+
+    // 4. Probar caché lidMap previo para "100@lid" sin alt metadata
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: "100@lid" },
+        message: { conversation: "A" }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491111111111@s.whatsapp.net", { text: "Ingrese Nombre" }, expect.anything());
+
+    // 5. Probar signalRepository
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: "400@lid" },
+        message: { conversation: "Hola" }
+      }]
+    });
+    expect(getPNForLIDMock).toHaveBeenCalledWith("400@lid");
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("5491199999999@s.whatsapp.net", { text: "Menú Principal" }, expect.anything());
+
+    // 6. Fallback a rawJid cuando no hay forma de resolver
+    getPNForLIDMock.mockResolvedValueOnce(undefined);
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: "500@lid" },
+        message: { conversation: "Hola" }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith("500@lid", { text: "Menú Principal" }, expect.anything());
+  });
 });
