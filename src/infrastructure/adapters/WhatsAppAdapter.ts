@@ -24,10 +24,82 @@ export class WhatsAppAdapter {
   private flowProvider: FlowProvider;
   private authStorage: AuthStorageAdapter;
 
+  private lidMap = new Map<string, string>();
+
   constructor(flowProvider: FlowProvider, leadRepo: LeadRepository, authStorage?: AuthStorageAdapter) {
     this.leadManager = new SessionLeadManager(leadRepo);
     this.flowProvider = flowProvider;
     this.authStorage = authStorage || AuthStorageFactory.create();
+  }
+
+  private async resolveJid(sock: any, msg: any): Promise<string> {
+    const key = msg.key || {};
+    const rawJid = key.remoteJid || '';
+
+    if (!rawJid || rawJid.endsWith('@s.whatsapp.net')) {
+      return rawJid;
+    }
+
+    if (!rawJid.endsWith('@lid')) {
+      return rawJid;
+    }
+
+    // 1. Buscar en senderPn (msg.key.senderPn)
+    if (key.senderPn && typeof key.senderPn === 'string') {
+      const cleanPn = key.senderPn.replace(/@.*$/, '');
+      const pnJid = `${cleanPn}@s.whatsapp.net`;
+      this.lidMap.set(rawJid, pnJid);
+      return pnJid;
+    }
+
+    // 2. Buscar en remoteJidAlt (msg.key.remoteJidAlt)
+    if (key.remoteJidAlt && typeof key.remoteJidAlt === 'string') {
+      let pnJid = key.remoteJidAlt;
+      if (!pnJid.endsWith('@s.whatsapp.net')) {
+        const cleanPn = pnJid.replace(/@.*$/, '');
+        pnJid = `${cleanPn}@s.whatsapp.net`;
+      }
+      this.lidMap.set(rawJid, pnJid);
+      return pnJid;
+    }
+
+    // 3. Buscar en participantAlt (msg.key.participantAlt o msg.participantAlt)
+    const partAlt = key.participantAlt || msg.participantAlt;
+    if (partAlt && typeof partAlt === 'string') {
+      const cleanPn = partAlt.replace(/@.*$/, '');
+      const pnJid = `${cleanPn}@s.whatsapp.net`;
+      this.lidMap.set(rawJid, pnJid);
+      return pnJid;
+    }
+
+    // 4. Buscar en participant (msg.key.participant o msg.participant) si termina en @s.whatsapp.net
+    const part = key.participant || msg.participant;
+    if (part && typeof part === 'string' && part.endsWith('@s.whatsapp.net')) {
+      this.lidMap.set(rawJid, part);
+      return part;
+    }
+
+    // 5. Buscar en nuestro mapa de LID a PN acumulado en memoria
+    if (this.lidMap.has(rawJid)) {
+      return this.lidMap.get(rawJid)!;
+    }
+
+    // 6. Intentar resolver usando signalRepository.lidMapping de Baileys si está disponible
+    try {
+      if (sock?.signalRepository?.lidMapping?.getPNForLID) {
+        const pn = await sock.signalRepository.lidMapping.getPNForLID(rawJid);
+        if (pn && typeof pn === 'string') {
+          const cleanPn = pn.replace(/@.*$/, '');
+          const pnJid = `${cleanPn}@s.whatsapp.net`;
+          this.lidMap.set(rawJid, pnJid);
+          return pnJid;
+        }
+      }
+    } catch {
+      // Ignorar si no está implementado
+    }
+
+    return rawJid;
   }
 
   async start() {
@@ -91,8 +163,8 @@ export class WhatsAppAdapter {
       const msg = m.messages[0];
       if (!msg || !msg.message || msg.key.fromMe || !msg.key.remoteJid) return;
 
-      const remoteJid = msg.key.remoteJid;
-      if (remoteJid.endsWith('@g.us') || remoteJid.endsWith('@newsletter') || remoteJid === 'status@broadcast') {
+      const rawJid = msg.key.remoteJid;
+      if (rawJid.endsWith('@g.us') || rawJid.endsWith('@newsletter') || rawJid === 'status@broadcast') {
         return;
       }
 
@@ -104,12 +176,18 @@ export class WhatsAppAdapter {
 
       if (!text.trim()) return;
 
+      const remoteJid = await this.resolveJid(sock, msg);
+
+      if (rawJid !== remoteJid) {
+        ErrorHandler.logSystem('WhatsAppAdapter', `JID LID detectado (${rawJid}), normalizado a ${remoteJid}`);
+      }
+
       ErrorHandler.logSystem('WhatsAppAdapter', `Mensaje recibido de ${remoteJid}: "${text.trim()}"`);
 
       try {
         await this.processMessage(sock, remoteJid, text.trim(), msg);
       } catch (err) {
-        ErrorHandler.handle('WhatsAppAdapter', err, { remoteJid, text: text.trim() });
+        ErrorHandler.handle('WhatsAppAdapter', err, { remoteJid, rawJid, text: text.trim() });
       }
     });
   }

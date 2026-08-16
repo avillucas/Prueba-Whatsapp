@@ -129,14 +129,14 @@ describe("WhatsAppAdapter", () => {
       type: 'notify',
       messages: [{ key: { fromMe: false, remoteJid: userJid }, message: { conversation: 'Hola' } }]
     });
-    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Menú Principal" });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Menú Principal" }, expect.anything());
 
     // 2. Enviar "A" -> pasa a NODE_NAME
     await upsertHandler({
       type: 'notify',
       messages: [{ key: { fromMe: false, remoteJid: userJid }, message: { conversation: 'A' } }]
     });
-    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Ingrese Nombre" });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Ingrese Nombre" }, expect.anything());
 
     // 3. Enviar Nombre ("Lucas Avila") -> Pasa por NODE_NAME, y luego el auto-avanzador detecta que NODE_TEL (Telefono_WhatsApp) YA está autocompletado, saltándolo hasta FIN!
     await upsertHandler({
@@ -144,7 +144,7 @@ describe("WhatsAppAdapter", () => {
       messages: [{ key: { fromMe: false, remoteJid: userJid }, message: { conversation: 'Lucas Avila' } }]
     });
 
-    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "¡Gracias!" });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "¡Gracias!" }, expect.anything());
   });
 
   it("Debería manejar re-preguntas ante errores de validación", async () => {
@@ -172,7 +172,7 @@ describe("WhatsAppAdapter", () => {
 
     expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, expect.objectContaining({
       text: expect.stringContaining("⚠️")
-    }));
+    }), expect.anything());
   });
 
   it("Debería reiniciar la conversación si el usuario envía 'salir'", async () => {
@@ -192,6 +192,29 @@ describe("WhatsAppAdapter", () => {
       messages: [{ key: { fromMe: false, remoteJid: userJid }, message: { conversation: 'salir' } }]
     });
 
-    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Conversación finalizada. ¡Escríbenos de nuevo para volver a empezar!" });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Conversación finalizada. ¡Escríbenos de nuevo para volver a empezar!" }, expect.anything());
+  });
+
+  it("Debería normalizar JID de tipo @lid a @s.whatsapp.net usando senderPn o remoteJidAlt", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    await adapter.start();
+
+    const upsertHandler = eventListeners['messages.upsert'];
+    const lidJid = "184211298336835@lid";
+    const expectedPhoneJid = "5491135204879@s.whatsapp.net";
+
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: {
+          fromMe: false,
+          remoteJid: lidJid,
+          senderPn: "5491135204879"
+        },
+        message: { conversation: 'Hola' }
+      }]
+    });
+
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(expectedPhoneJid, { text: "Menú Principal" }, expect.anything());
   });
 });
