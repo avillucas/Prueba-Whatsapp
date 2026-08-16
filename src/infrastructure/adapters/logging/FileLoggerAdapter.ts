@@ -11,12 +11,14 @@ export class FileLoggerAdapter implements LoggerAdapter {
     this.logDirectory = logDirectory;
     this.errorLogFilePath = path.join(this.logDirectory, 'errors.log');
     this.systemLogFilePath = path.join(this.logDirectory, 'system.log');
+    this.ensureLogFiles();
   }
 
   public setLogDirectory(dir: string): void {
     this.logDirectory = dir;
     this.errorLogFilePath = path.join(dir, 'errors.log');
     this.systemLogFilePath = path.join(dir, 'system.log');
+    this.ensureLogFiles();
   }
 
   public getErrorLogFilePath(): string {
@@ -27,10 +29,24 @@ export class FileLoggerAdapter implements LoggerAdapter {
     return this.systemLogFilePath;
   }
 
-  private ensureLogDirectory(): void {
-    if (!fs.existsSync(this.logDirectory)) {
-      fs.mkdirSync(this.logDirectory, { recursive: true });
+  private ensureLogFiles(): void {
+    try {
+      if (!fs.existsSync(this.logDirectory)) {
+        fs.mkdirSync(this.logDirectory, { recursive: true });
+      }
+      if (!fs.existsSync(this.errorLogFilePath)) {
+        fs.writeFileSync(this.errorLogFilePath, '', 'utf-8');
+      }
+      if (!fs.existsSync(this.systemLogFilePath)) {
+        fs.writeFileSync(this.systemLogFilePath, '', 'utf-8');
+      }
+    } catch (_err) {
+      // Ignorar fallos de I/O en disco
     }
+  }
+
+  private ensureLogDirectory(): void {
+    this.ensureLogFiles();
   }
 
   public handleError(context: string, error: any, extraData?: any): void {

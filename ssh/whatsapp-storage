@@ -18,6 +18,9 @@ if [ -f ".env" ]; then
     ENV_FILE_FLAG="--env-file .env"
 fi
 
+# Limpiamos cualquier contenedor previo con el mismo nombre si existiera
+docker rm -f whatsapp-storage 2>/dev/null || true
+
 # Ejecutamos el contenedor con las variables para almacenamiento de sesión de WhatsApp
 docker compose $ENV_FILE_FLAG run --rm -it \
   --name whatsapp-storage \

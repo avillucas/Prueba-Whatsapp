@@ -2,12 +2,19 @@
 
 echo "Iniciando Bot de WhatsApp del Motor de Decisiones..."
 
-# Asegurarse de que el directorio data exista para que el montaje del volumen no falle
-mkdir -p data
+# Asegurarse de que los directorios data y logs existan para que el montaje de volúmenes no falle
+mkdir -p data logs
+
+# Levantamos el contenedor de Redis si no está activo
+docker compose up -d redis
 
 # Construimos la imagen si no existe
 docker compose build whatsapp-bot
 
+# Limpiamos cualquier contenedor previo con el mismo nombre si existiera
+docker rm -f whatsapp-service 2>/dev/null || true
+
 # Ejecutamos un contenedor temporal con la variable de entorno INTERFACE=baileys
 # --name asigna un nombre distintivo al contenedor para evitar colisiones
 docker compose run --rm --name whatsapp-service -e INTERFACE=baileys -e FLOW_FILE=flow_cfp412.json whatsapp-bot
+

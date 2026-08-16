@@ -66,7 +66,7 @@ export class ConsoleAdapter {
            await this.leadManager.finalizeSession(this.sessionId);
         }
       } else {
-        ErrorHandler.handle('ConsoleAdapter', new Error(`Opción no válida: ${error}`));
+        ErrorHandler.logSystem('ConsoleAdapter', `Opción no válida ingresada: "${answer.trim()}". ${error || ''}`);
         this.printBot(this.engine.getCurrentNode().text);
       }
 

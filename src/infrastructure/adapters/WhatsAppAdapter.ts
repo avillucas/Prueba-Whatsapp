@@ -107,14 +107,16 @@ export class WhatsAppAdapter {
       ErrorHandler.logSystem('WhatsAppAdapter', `Mensaje recibido de ${remoteJid}: "${text.trim()}"`);
 
       try {
-        await this.processMessage(sock, remoteJid, text.trim());
+        await this.processMessage(sock, remoteJid, text.trim(), msg);
       } catch (err) {
         ErrorHandler.handle('WhatsAppAdapter', err, { remoteJid, text: text.trim() });
       }
     });
   }
 
-  private async processMessage(sock: any, remoteJid: string, text: string) {
+  private async processMessage(sock: any, remoteJid: string, text: string, rawMsg?: any) {
+    const sendOptions = rawMsg ? { quoted: rawMsg } : {};
+
     // 1. Obtener o crear la sesión activa para este usuario
     if (!this.activeSessions.has(remoteJid)) {
       const sessionId = SessionIdGenerator.generate(remoteJid);
@@ -126,14 +128,19 @@ export class WhatsAppAdapter {
         engine: engine
       });
 
-      const rawPhone = remoteJid.split('@')[0];
-      this.leadManager.initSession(sessionId, {
-        Telefono_WhatsApp: rawPhone
-      });
+      const isPhoneNumber = remoteJid.endsWith('@s.whatsapp.net');
+      if (isPhoneNumber) {
+        const rawPhone = remoteJid.split('@')[0];
+        this.leadManager.initSession(sessionId, {
+          Telefono_WhatsApp: rawPhone
+        });
+      } else {
+        this.leadManager.initSession(sessionId);
+      }
 
       const initialNode = engine.getCurrentNode();
       ErrorHandler.logSystem('WhatsAppAdapter', `Enviando menú inicial a ${remoteJid}`);
-      await sock.sendMessage(remoteJid, { text: initialNode.text });
+      await sock.sendMessage(remoteJid, { text: initialNode.text }, sendOptions);
       return;
     }
 
@@ -143,7 +150,7 @@ export class WhatsAppAdapter {
       await this.leadManager.finalizeSession(session.sessionId);
       this.activeSessions.delete(remoteJid);
       ErrorHandler.logSystem('WhatsAppAdapter', `Sesión finalizada manualmente por usuario ${remoteJid}`);
-      await sock.sendMessage(remoteJid, { text: "Conversación finalizada. ¡Escríbenos de nuevo para volver a empezar!" });
+      await sock.sendMessage(remoteJid, { text: "Conversación finalizada. ¡Escríbenos de nuevo para volver a empezar!" }, sendOptions);
       return;
     }
 
@@ -152,7 +159,7 @@ export class WhatsAppAdapter {
       const validationError = this.leadManager.validateField(currentNode.extractData, text);
       if (validationError) {
         ErrorHandler.logSystem('WhatsAppAdapter', `Validación fallida para ${remoteJid} (Campo: ${currentNode.extractData}): "${text}"`);
-        await sock.sendMessage(remoteJid, { text: `⚠️ ${validationError}\n\n${currentNode.text}` });
+        await sock.sendMessage(remoteJid, { text: `⚠️ ${validationError}\n\n${currentNode.text}` }, sendOptions);
         return;
       }
     }
@@ -166,8 +173,22 @@ export class WhatsAppAdapter {
       }
 
       let targetNode = nextNode;
+      const visitedNodes = new Set<string>();
 
-      while (targetNode && targetNode.extractData && this.leadManager.hasValidField(session.sessionId, targetNode.extractData)) {
+      // No auto-completar selecciones de menú o acciones de navegación
+      const isAutoCompletable = (field: string) => {
+        return field !== 'Opcion_Elegida' && field !== 'Accion_Reinicio';
+      };
+
+      while (
+        targetNode && 
+        targetNode.extractData && 
+        isAutoCompletable(targetNode.extractData) &&
+        !visitedNodes.has(targetNode.id) &&
+        this.leadManager.hasValidField(session.sessionId, targetNode.extractData)
+      ) {
+        visitedNodes.add(targetNode.id);
+
         const autoVal = this.leadManager.getSessionData(session.sessionId, targetNode.extractData)!;
         ErrorHandler.logSystem('WhatsAppAdapter', `Auto-completando '${targetNode.extractData}' para ${remoteJid} con valor: "${autoVal}"`);
         this.leadManager.addData(session.sessionId, targetNode.extractData, autoVal);
@@ -178,7 +199,7 @@ export class WhatsAppAdapter {
       }
 
       ErrorHandler.logSystem('WhatsAppAdapter', `Enviando respuesta a ${remoteJid} (Nodo: ${targetNode.id})`);
-      await sock.sendMessage(remoteJid, { text: targetNode.text });
+      await sock.sendMessage(remoteJid, { text: targetNode.text }, sendOptions);
 
       if (targetNode.id.includes("FIN") || targetNode.id.includes("CIERRE")) {
         ErrorHandler.logSystem('WhatsAppAdapter', `Fin de flujo alcanzado para ${session.sessionId}. Guardando Lead...`);
@@ -187,11 +208,8 @@ export class WhatsAppAdapter {
       }
     } else {
       const currentNode = session.engine.getCurrentNode();
-      ErrorHandler.logSystem('WhatsAppAdapter', `Opción no válida enviada por ${remoteJid}: "${text}". Reenviando nodo actual.`);
-      if (error) {
-        ErrorHandler.handle('WhatsAppAdapter', new Error(`Opción no válida: ${error}`), { remoteJid, text });
-      }
-      await sock.sendMessage(remoteJid, { text: `Opción no válida.\n\n${currentNode.text}` });
+      ErrorHandler.logSystem('WhatsAppAdapter', `Opción no válida enviada por ${remoteJid}: "${text}". ${error || ''}. Reenviando nodo actual.`);
+      await sock.sendMessage(remoteJid, { text: `Opción no válida.\n\n${currentNode.text}` }, sendOptions);
     }
   }
 }

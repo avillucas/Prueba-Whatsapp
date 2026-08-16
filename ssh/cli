@@ -8,6 +8,9 @@ mkdir -p data
 # Construimos la imagen si no existe
 docker compose build whatsapp-bot
 
+# Limpiamos cualquier contenedor previo con el mismo nombre si existiera
+docker rm -f cli-bot 2>/dev/null || true
+
 # Ejecutamos un contenedor temporal con la variable de entorno INTERFACE=command
 # Esto anula la configuración del config.json sólo para esta ejecución.
 # --rm asegura que el contenedor temporal se elimine al salir.

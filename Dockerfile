@@ -18,7 +18,7 @@ RUN if [ ! -f ./motorDecision/package.json ]; then \
 
 
 # 2. Copiamos los archivos de configuración y dependencias de la app principal
-COPY package.json tsconfig.json jest.config.js ./
+COPY package.json tsconfig.json jest.config.js .eslintrc.json ./
 
 # 3. Instalamos dependencias de la app principal
 RUN npm install
