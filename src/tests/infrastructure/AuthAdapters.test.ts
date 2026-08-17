@@ -17,13 +17,16 @@ const mockPipeline = jest.fn().mockImplementation(() => ({
 const mockConnect = jest.fn().mockResolvedValue(undefined);
 const mockQuit = jest.fn().mockResolvedValue(undefined);
 
+const mockOn = jest.fn();
+
 jest.mock('ioredis', () => {
   return jest.fn().mockImplementation(() => ({
     status: 'wait',
     connect: mockConnect,
     hgetall: mockHgetall,
     pipeline: mockPipeline,
-    quit: mockQuit
+    quit: mockQuit,
+    on: mockOn
   }));
 });
 
