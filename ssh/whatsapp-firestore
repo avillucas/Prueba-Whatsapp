@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
+
+init_infrastructure
+
+echo "🚀 Iniciando despliegue de WhatsApp Bot con Firestore y Google Sheets..."
+
+echo "📦 Construyendo la imagen Docker para whatsapp-firestore..."
+docker compose build whatsapp-firestore
+
+if [ "$(docker ps -aq -f name=whatsapp-firestore)" ]; then
+    echo "🛑 Deteniendo y removiendo contenedor anterior whatsapp-firestore..."
+    docker rm -f whatsapp-firestore 2>/dev/null || true
+fi
+
+echo "🚀 Levantando contenedor whatsapp-firestore en modo interactivo..."
+echo "💡 Escanea el código QR y observa la sincronización con Firestore en pantalla."
+echo "----------------------------------------------------------------------"
+
+docker compose run --rm --name whatsapp-firestore whatsapp-firestore

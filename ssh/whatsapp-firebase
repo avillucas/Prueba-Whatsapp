@@ -13,12 +13,12 @@ docker compose build whatsapp-firebase
 
 if [ "$(docker ps -aq -f name=whatsapp-firebase)" ]; then
     echo "🛑 Deteniendo y removiendo contenedor anterior whatsapp-firebase..."
-    docker compose stop whatsapp-firebase 2>/dev/null || true
-    docker compose rm -f whatsapp-firebase 2>/dev/null || true
+    docker rm -f whatsapp-firebase 2>/dev/null || true
 fi
 
-echo "🚀 Levantando contenedor whatsapp-firebase..."
-docker compose up -d whatsapp-firebase
+echo "🚀 Levantando contenedor whatsapp-firebase en modo interactivo..."
+echo "💡 Escanea el código QR y observa la sincronización con Firebase en pantalla."
+echo "----------------------------------------------------------------------"
 
-echo "✅ Despliegue con Firebase y Google Sheets completado con éxito."
-echo "💡 Para ver los logs y escanear el QR ejecuta: docker compose logs -f whatsapp-firebase"
+docker compose run --rm --name whatsapp-firebase whatsapp-firebase
+
