@@ -18,7 +18,7 @@ export class AuthStorageFactory {
     const rawType = storageType || config?.authStorage?.type || process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || 'redis';
     const type = rawType.toLowerCase().trim();
 
-    if (type === 'firestore' || type === 'gcf' || type === 'google_firestore') {
+    if (type === 'firestore' || type === 'firebase' || type === 'firebase_firestore' || type === 'gcf' || type === 'google_firestore' || type === 'google') {
       const collectionName = config?.authStorage?.firestore?.collectionName || process.env.FIRESTORE_COLLECTION_NAME || 'whatsapp_auth';
       const projectId = config?.authStorage?.firestore?.projectId || process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
       const clientEmail = config?.leadsStorage?.googleSheets?.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;

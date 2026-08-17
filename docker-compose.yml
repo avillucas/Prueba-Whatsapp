@@ -18,10 +18,12 @@ services:
     env_file:
       - .env
     environment:
+      - AUTH_STORAGE_TYPE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - LOG_DIR=./logs
     volumes:
+      - ./auth_info:/app/auth_info
       - ./data:/app/data
       - ./logs:/app/logs
       - ./flows:/app/flows
@@ -34,14 +36,39 @@ services:
     stdin_open: true # Equivalente a -i (interactivo)
     tty: true # Equivalente a -t (tty), necesario para qrcode-terminal
 
+  whatsapp-firebase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: whatsapp-firebase
+    env_file:
+      - .env
+    environment:
+      - INTERFACE=${INTERFACE:-baileys}
+      - FLOW_FILE=${FLOW_FILE:-flow_cfp412.json}
+      - LEADS_STORAGE_TYPE=${LEADS_STORAGE_TYPE:-google_sheets}
+      - AUTH_STORAGE_TYPE=${AUTH_STORAGE_TYPE:-firestore}
+      - LOG_DIR=./logs
+    volumes:
+      - ./auth_info:/app/auth_info
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./flows:/app/flows
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
   test:
     build:
       context: .
       dockerfile: Dockerfile
       target: builder
     container_name: whatsapp-bot-test
-    depends_on:
-      - redis
     volumes:
       - ./src:/app/src
       - ./flows:/app/flows

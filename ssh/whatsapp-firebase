@@ -18,40 +18,20 @@ if [ -d "../motorDecision" ]; then
     fi
 fi
 
-# 1. Construir la imagen de producción
-echo "📦 Construyendo la imagen Docker de producción..."
-docker build -t whatsapp-bot:latest .
+# 1. Construir el servicio whatsapp-firebase
+echo "📦 Construyendo la imagen Docker para whatsapp-firebase..."
+docker compose build whatsapp-firebase
 
 # 2. Detener y eliminar contenedor anterior si existe
 if [ "$(docker ps -aq -f name=whatsapp-firebase)" ]; then
     echo "🛑 Deteniendo y removiendo contenedor anterior whatsapp-firebase..."
-    docker stop whatsapp-firebase 2>/dev/null || true
-    docker rm whatsapp-firebase 2>/dev/null || true
+    docker compose stop whatsapp-firebase 2>/dev/null || true
+    docker compose rm -f whatsapp-firebase 2>/dev/null || true
 fi
 
-# 3. Preparar flag de archivo .env si existe
-ENV_FILE_FLAG=""
-if [ -f ".env" ]; then
-    echo "📄 Cargando variables desde el archivo .env..."
-    ENV_FILE_FLAG="--env-file .env"
-fi
-
-# 4. Ejecutar contenedor de producción en segundo plano con Firebase (Firestore) y Google Sheets
+# 3. Ejecutar servicio de producción whatsapp-firebase sin dependencia de Redis
 echo "🚀 Levantando contenedor whatsapp-firebase..."
-docker run -d \
-  --name whatsapp-firebase \
-  --restart unless-stopped \
-  $ENV_FILE_FLAG \
-  -e INTERFACE="${INTERFACE:-baileys}" \
-  -e FLOW_FILE="${FLOW_FILE:-flow_cfp412.json}" \
-  -e LEADS_STORAGE_TYPE="${LEADS_STORAGE_TYPE:-google_sheets}" \
-  -e AUTH_STORAGE_TYPE="${AUTH_STORAGE_TYPE:-firestore}" \
-  -v "$(pwd)/auth_info:/app/auth_info" \
-  -v "$(pwd)/data:/app/data" \
-  -v "$(pwd)/logs:/app/logs" \
-  -v "$(pwd)/flows:/app/flows" \
-  -it \
-  whatsapp-bot:latest
+docker compose up -d whatsapp-firebase
 
 echo "✅ Despliegue con Firebase y Google Sheets completado con éxito."
-echo "💡 Para ver los logs y escanear el QR ejecuta: docker logs -f whatsapp-firebase"
+echo "💡 Para ver los logs y escanear el QR ejecuta: docker compose logs -f whatsapp-firebase"

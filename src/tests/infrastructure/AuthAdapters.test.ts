@@ -154,9 +154,15 @@ describe('Auth Storage Adapters Suite', () => {
       expect(adapter).toBeInstanceOf(RedisAuthAdapter);
     });
 
-    it("debería retornar FirestoreAuthAdapter cuando el tipo es 'firestore' o 'gcf'", () => {
+    it("debería retornar FirestoreAuthAdapter cuando el tipo es 'firestore', 'firebase', 'firebase_firestore' o 'gcf'", () => {
       const adapterFirestore = AuthStorageFactory.create('firestore');
       expect(adapterFirestore).toBeInstanceOf(FirestoreAuthAdapter);
+
+      const adapterFirebase = AuthStorageFactory.create('firebase');
+      expect(adapterFirebase).toBeInstanceOf(FirestoreAuthAdapter);
+
+      const adapterFirebaseFirestore = AuthStorageFactory.create('firebase_firestore');
+      expect(adapterFirebaseFirestore).toBeInstanceOf(FirestoreAuthAdapter);
 
       const adapterGcf = AuthStorageFactory.create('gcf');
       expect(adapterGcf).toBeInstanceOf(FirestoreAuthAdapter);

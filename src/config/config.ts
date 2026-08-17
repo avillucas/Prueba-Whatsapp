@@ -107,7 +107,7 @@ export function loadConfig(): AppConfig {
 
     if (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER) {
         const authType = (process.env.AUTH_STORAGE_TYPE || process.env.AUTH_ADAPTER || '').toLowerCase().trim();
-        if (authType === 'redis' || authType === 'firestore' || authType === 'gcf' || authType === 'google_firestore' || authType === 'google') {
+        if (authType === 'redis' || authType === 'firestore' || authType === 'firebase' || authType === 'firebase_firestore' || authType === 'gcf' || authType === 'google_firestore' || authType === 'google') {
             config.authStorage.type = authType as any;
         }
     }
