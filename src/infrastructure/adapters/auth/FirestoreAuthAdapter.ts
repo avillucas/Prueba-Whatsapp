@@ -7,6 +7,7 @@ import { ErrorHandler } from '../../logging/ErrorHandler';
 export interface FirestoreAuthAdapterOptions {
   collectionName?: string;
   projectId?: string;
+  databaseId?: string;
   clientEmail?: string;
   privateKey?: string;
   localDir?: string;
@@ -25,6 +26,11 @@ export class FirestoreAuthAdapter implements AuthStorageAdapter {
     const projectId = options.projectId || process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
     if (projectId) {
       firestoreOptions.projectId = projectId;
+    }
+
+    const databaseId = options.databaseId || process.env.FIRESTORE_DATABASE_ID || process.env.DATABASE;
+    if (databaseId) {
+      firestoreOptions.databaseId = databaseId;
     }
 
     const clientEmail = options.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;

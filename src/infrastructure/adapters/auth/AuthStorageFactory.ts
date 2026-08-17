@@ -21,6 +21,7 @@ export class AuthStorageFactory {
     if (type === 'firestore' || type === 'firebase' || type === 'firebase_firestore' || type === 'gcf' || type === 'google_firestore' || type === 'google') {
       const collectionName = config?.authStorage?.firestore?.collectionName || process.env.FIRESTORE_COLLECTION_NAME || 'whatsapp_auth';
       const projectId = config?.authStorage?.firestore?.projectId || process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT;
+      const databaseId = config?.authStorage?.firestore?.databaseId || process.env.FIRESTORE_DATABASE_ID || process.env.DATABASE;
       const clientEmail = config?.leadsStorage?.googleSheets?.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
       const privateKey = config?.leadsStorage?.googleSheets?.privateKey || process.env.GOOGLE_PRIVATE_KEY;
       const localDir = config?.authStorage?.authDir || process.env.AUTH_DIR || './auth_info';
@@ -28,6 +29,7 @@ export class AuthStorageFactory {
       return new FirestoreAuthAdapter({
         collectionName,
         projectId,
+        databaseId,
         clientEmail,
         privateKey,
         localDir

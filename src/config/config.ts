@@ -19,6 +19,7 @@ export interface RedisConfig {
 export interface FirestoreConfig {
     collectionName?: string;
     projectId?: string;
+    databaseId?: string;
 }
 
 export interface AuthStorageConfig {
@@ -132,6 +133,7 @@ export function loadConfig(): AppConfig {
     }
     config.authStorage.firestore.collectionName = process.env.FIRESTORE_COLLECTION_NAME || config.authStorage.firestore.collectionName || 'whatsapp_auth';
     config.authStorage.firestore.projectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || config.authStorage.firestore.projectId;
+    config.authStorage.firestore.databaseId = process.env.FIRESTORE_DATABASE_ID || process.env.DATABASE || config.authStorage.firestore.databaseId;
 
     // Inicializar sub-objeto loggingStorage si no existe
     if (!config.loggingStorage) {
