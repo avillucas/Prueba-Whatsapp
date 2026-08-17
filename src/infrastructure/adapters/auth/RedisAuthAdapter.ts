@@ -35,6 +35,10 @@ export class RedisAuthAdapter implements AuthStorageAdapter {
       lazyConnect: true,
       maxRetriesPerRequest: 3
     });
+
+    this.redis.on('error', (err) => {
+      ErrorHandler.logSystem('RedisAuthAdapter', `Error de conexión en Redis: ${err.message}`);
+    });
   }
 
   private async ensureConnected(): Promise<void> {
