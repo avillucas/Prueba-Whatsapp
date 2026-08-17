@@ -1,12 +1,12 @@
 #!/bin/bash
+set -e
 
-echo "Iniciando suite de tests en entorno Docker..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
 
-# Asegurarse de que el directorio data exista para el montaje del volumen
-mkdir -p data
+init_infrastructure
 
-# Construir la imagen de test usando el target builder
+echo "🧪 Iniciando suite de tests en entorno Docker..."
+
 docker compose build test
-
-# Ejecutar el contenedor de test y eliminarlo al finalizar
 docker compose run --rm test "$@"

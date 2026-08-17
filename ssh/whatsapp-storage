@@ -1,32 +1,23 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando Bot de WhatsApp con almacenamiento de sesión NoSQL (Redis / Firestore)..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
 
-# Asegurarse de que los directorios requeridos existan
-mkdir -p data flows
+init_infrastructure
 
-# Levantamos el contenedor de Redis si no está activo
+echo "🚀 Iniciando Bot de WhatsApp con almacenamiento NoSQL..."
+
 docker compose up -d redis
+docker compose build whatsapp-local
 
-# Construimos la imagen si no existe
-docker compose build whatsapp-bot
-
-# Si existe un archivo .env, pasamos la referencia.
-ENV_FILE_FLAG=""
-if [ -f ".env" ]; then
-    ENV_FILE_FLAG="--env-file .env"
-fi
-
-# Limpiamos cualquier contenedor previo con el mismo nombre si existiera
 docker rm -f whatsapp-storage 2>/dev/null || true
 
-# Ejecutamos el contenedor con las variables para almacenamiento de sesión de WhatsApp
-docker compose $ENV_FILE_FLAG run --rm -it \
+docker compose run --rm -it \
   --name whatsapp-storage \
   -e INTERFACE=${INTERFACE:-baileys} \
   -e FLOW_FILE=${FLOW_FILE:-flow_cfp412.json} \
-  -e AUTH_STORAGE_TYPE=${AUTH_STORAGE_TYPE:-google_firestore} \
+  -e AUTH_STORAGE_TYPE=${AUTH_STORAGE_TYPE:-firestore} \
   -e REDIS_HOST=redis \
   -e REDIS_PORT=6379 \
-  whatsapp-bot
+  whatsapp-local

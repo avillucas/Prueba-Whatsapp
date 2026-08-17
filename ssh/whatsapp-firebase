@@ -1,35 +1,22 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
+
+init_infrastructure
+
 echo "🚀 Iniciando despliegue de WhatsApp Bot con Firebase (Firestore) y Google Sheets..."
 
-# Asegurar que existan los directorios requeridos por los volúmenes
-mkdir -p auth_info data flows logs
-
-# 0. Copiar versión distribuida de motorDecision desde ../motorDecision (ignorado por Git)
-if [ -d "../motorDecision" ]; then
-    echo "🔄 Copiando la librería precompilada desde ../motorDecision..."
-    mkdir -p motorDecision/dist
-    if [ -d "../motorDecision/dist" ]; then
-        cp -r ../motorDecision/dist/* motorDecision/dist/ 2>/dev/null || true
-    fi
-    if [ -f "../motorDecision/package.json" ]; then
-        cp ../motorDecision/package.json motorDecision/package.json 2>/dev/null || true
-    fi
-fi
-
-# 1. Construir el servicio whatsapp-firebase
 echo "📦 Construyendo la imagen Docker para whatsapp-firebase..."
 docker compose build whatsapp-firebase
 
-# 2. Detener y eliminar contenedor anterior si existe
 if [ "$(docker ps -aq -f name=whatsapp-firebase)" ]; then
     echo "🛑 Deteniendo y removiendo contenedor anterior whatsapp-firebase..."
     docker compose stop whatsapp-firebase 2>/dev/null || true
     docker compose rm -f whatsapp-firebase 2>/dev/null || true
 fi
 
-# 3. Ejecutar servicio de producción whatsapp-firebase sin dependencia de Redis
 echo "🚀 Levantando contenedor whatsapp-firebase..."
 docker compose up -d whatsapp-firebase
 

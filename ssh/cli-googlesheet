@@ -1,24 +1,19 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando Bot de WhatsApp con integración a Google Sheets..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
 
-# Asegurarse de que los directorios requeridos existan
-mkdir -p auth_info data flows
+init_infrastructure
 
-# Construimos la imagen si no existe
-docker compose build whatsapp-bot
+echo "🚀 Iniciando CLI del Bot de WhatsApp con integración a Google Sheets..."
 
-# Si existe un archivo .env, pasamos la referencia; si no, cargamos las variables inline.
-ENV_FILE_FLAG=""
-if [ -f ".env" ]; then
-    ENV_FILE_FLAG="--env-file .env"
-fi
+docker compose build whatsapp-cli
+docker rm -f cli-googlesheet 2>/dev/null || true
 
-# Ejecutamos el contenedor temporal con las variables sobreescritas para Google Sheets
-docker compose $ENV_FILE_FLAG run --rm \
+docker compose run --rm \
   --name cli-googlesheet \
   -e INTERFACE=${INTERFACE:-command} \
   -e FLOW_FILE=${FLOW_FILE:-flow_cfp412.json} \
   -e LEADS_STORAGE_TYPE=google_sheets \
-  whatsapp-bot
+  whatsapp-cli

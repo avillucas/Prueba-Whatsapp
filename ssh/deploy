@@ -1,46 +1,24 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Iniciando despliegue de producción del WhatsApp Bot (Docker CLI)..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
 
-# Asegurar que existan los directorios requeridos por los volúmenes
-mkdir -p auth_info data flows logs
+init_infrastructure
 
-# 0. Copiar versión distribuida de motorDecision desde ../motorDecision (ignorado por Git)
-if [ -d "../motorDecision" ]; then
-    echo "🔄 Copiando la librería precompilada desde ../motorDecision..."
-    mkdir -p motorDecision/dist
-    if [ -d "../motorDecision/dist" ]; then
-        cp -r ../motorDecision/dist/* motorDecision/dist/ 2>/dev/null || true
-    fi
-    if [ -f "../motorDecision/package.json" ]; then
-        cp ../motorDecision/package.json motorDecision/package.json 2>/dev/null || true
-    fi
+echo "🚀 Iniciando despliegue de producción del WhatsApp Bot (Docker Compose)..."
+
+echo "📦 Construyendo la imagen Docker para whatsapp-firebase..."
+docker compose build whatsapp-firebase
+
+if [ "$(docker ps -aq -f name=whatsapp-firebase)" ]; then
+    echo "🛑 Deteniendo contenedor anterior whatsapp-firebase..."
+    docker compose stop whatsapp-firebase 2>/dev/null || true
+    docker compose rm -f whatsapp-firebase 2>/dev/null || true
 fi
 
-# 1. Construir la imagen de producción
-echo "📦 Construyendo la imagen Docker de producción..."
-docker build -t whatsapp-bot:latest .
-
-# 2. Detener y eliminar contenedor anterior si existe
-if [ "$(docker ps -aq -f name=whatsapp-bot)" ]; then
-    echo "🛑 Deteniendo y removiendo contenedor anterior..."
-    docker stop whatsapp-bot 2>/dev/null || true
-    docker rm whatsapp-bot 2>/dev/null || true
-fi
-
-# 3. Ejecutar contenedor de producción con Docker
-echo "🚀 Levantando contenedor de producción en segundo plano..."
-docker run -d \
-  --name whatsapp-bot \
-  --restart unless-stopped \
-  --env-file .env \
-  -v "$(pwd)/auth_info:/app/auth_info" \
-  -v "$(pwd)/data:/app/data" \
-  -v "$(pwd)/logs:/app/logs" \
-  -v "$(pwd)/flows:/app/flows" \
-  -it \
-  whatsapp-bot:latest
+echo "🚀 Levantando contenedor de producción..."
+docker compose up -d whatsapp-firebase
 
 echo "✅ Despliegue de producción completado con éxito."
-echo "💡 Para ver los logs y escanear el QR ejecuta: docker logs -f whatsapp-bot"
+echo "💡 Para ver los logs y escanear el QR ejecuta: docker compose logs -f whatsapp-firebase"

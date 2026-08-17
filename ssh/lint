@@ -1,12 +1,12 @@
 #!/bin/bash
+set -e
 
-echo "Iniciando linter (ESLint & TypeScript check) en entorno Docker..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_common.sh"
 
-# Asegurarse de que el directorio data exista para el montaje de volúmenes
-mkdir -p data
+init_infrastructure
 
-# Construir la imagen usando el target builder
+echo "🔍 Iniciando linter (ESLint & TypeScript check) en entorno Docker..."
+
 docker compose build test
-
-# Ejecutar el linter en el contenedor temporal y eliminarlo al finalizar
 docker compose run --rm test npm run lint "$@"
