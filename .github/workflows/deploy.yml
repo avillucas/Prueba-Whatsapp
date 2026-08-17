@@ -15,10 +15,10 @@ jobs:
       - name: Checkout whatsapp-bot repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       # Clonar y compilar la librería motorDecision desde GitHub si no se encuentra
@@ -77,16 +77,34 @@ jobs:
           key: ${{ secrets.GCP_VM_SSH_KEY }}
           port: 22
           script: |
+            set -e
+            echo "🚀 Verificando directorio de la aplicación en la VM de GCP..."
+            TARGET_DIR=""
+            for dir in "$HOME/Prueba-Whatsapp" "$HOME/prueba-whatsapp" "$HOME/whatsapp-bot" "$HOME/app"; do
+              if [ -d "$dir" ]; then
+                TARGET_DIR="$dir"
+                break
+              fi
+            done
+
+            if [ -z "$TARGET_DIR" ]; then
+              echo "📁 Directorio no encontrado. Clonando repositorio en $HOME/Prueba-Whatsapp..."
+              git clone "https://github.com/${{ github.repository }}.git" "$HOME/Prueba-Whatsapp"
+              TARGET_DIR="$HOME/Prueba-Whatsapp"
+            fi
+
+            cd "$TARGET_DIR"
+            echo "📂 Directorio activo: $(pwd)"
+
             echo "🚀 Actualizando repositorio en el servidor..."
-            cd ~/Prueba-Whatsapp || cd ~/app
-            git pull origin main
+            git pull origin main || git pull origin master
 
             echo "🔒 Generando archivo .env de producción desde GitHub Secrets..."
             cat << 'EOF' > .env
             INTERFACE=${{ secrets.INTERFACE || 'baileys' }}
             FLOW_FILE=${{ secrets.FLOW_FILE || 'flow_cfp412.json' }}
             LEADS_STORAGE_TYPE=${{ secrets.LEADS_STORAGE_TYPE || 'google_sheets' }}
-            AUTH_STORAGE_TYPE=${{ secrets.AUTH_STORAGE_TYPE || 'google' }}
+            AUTH_STORAGE_TYPE=${{ secrets.AUTH_STORAGE_TYPE || 'firestore' }}
             GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME }}"
             GOOGLE_SERVICE_ACCOUNT_EMAIL="${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}"
             GOOGLE_PRIVATE_KEY="${{ secrets.GOOGLE_PRIVATE_KEY }}"
