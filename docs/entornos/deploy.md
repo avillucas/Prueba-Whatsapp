@@ -97,6 +97,25 @@ Esto generará dos archivos:
 
 ---
 
+## 🛠️ Requisitos Previos en el Servidor / VM de GCP
+
+Para que el script `./ssh/deploy` o la acción de GitHub desplieguen correctamente, la máquina remota debe cumplir con los siguientes requisitos:
+
+1. **Docker Engine y Docker Compose V2**: Debe estar instalado en la VM.
+   ```bash
+   curl -fsSL https://get.docker.com -o get-docker.sh
+   sudo sh get-docker.sh
+   ```
+2. **Permisos de Usuario SSH sin Sudo**: El usuario SSH (configurado en `GCP_VM_USERNAME`) debe pertenecer al grupo `docker` para poder ejecutar comandos de Docker sin requerir `sudo`:
+   ```bash
+   sudo usermod -aG docker $USER
+   newgrp docker
+   ```
+3. **Directorio Estandarizado de Aplicación (`~/app`)**: El pipeline de CI/CD fija como directorio destino directo `$HOME/app` (`~/app`). Si en la VM existía el proyecto bajo `~/Prueba-Whatsapp`, el flujo lo renombrará automáticamente a `~/app` de forma transparente.
+4. **PATH para Sesiones SSH No Interactivas**: Los ejecutables de `docker` y `docker-compose` deben ser accesibles desde rutas globales (`/usr/bin`, `/usr/local/bin` o `/snap/bin`).
+
+---
+
 ## 🚀 Despliegue Manual o Automático
 
 ### Despliegue Manual en el Servidor
@@ -110,3 +129,27 @@ Para revisar los logs en tiempo real o escanear el QR en producción:
 ```bash
 docker compose logs -f whatsapp-firestore
 ```
+
+---
+
+## ❓ Solución de Problemas Frecuentes
+
+### 🚨 Error: `err: ./ssh/deploy: line 12: docker: command not found (Process exited with status 127)`
+
+**Causa**: Este error ocurre cuando la sesión SSH no interactiva ejecutada por el flujo CI/CD no encuentra el comando `docker` en su variable `$PATH`, o cuando Docker no está instalado en la Máquina Virtual remota.
+
+**Pasos de Resolución**:
+1. Conéctate vía SSH directamente a la VM de GCP:
+   ```bash
+   ssh -i ~/.ssh/gcp_deploy_key ubuntu@<IP_PUBLICA_GCP>
+   ```
+2. Verifica si Docker está instalado ejecutando `docker --version`.
+3. Si `docker` no está instalado, instálalo con:
+   ```bash
+   curl -fsSL https://get.docker.com | sh
+   ```
+4. Agrega tu usuario al grupo docker:
+   ```bash
+   sudo usermod -aG docker $USER
+   ```
+5. Verifica que el binario de Docker se encuentre en una ruta del PATH estándar como `/usr/bin/docker` o `/usr/local/bin/docker`. El script `./ssh/deploy` y la GitHub Action exportan automáticamente `export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/snap/bin` para garantizar su localización en entornos no interactivos.

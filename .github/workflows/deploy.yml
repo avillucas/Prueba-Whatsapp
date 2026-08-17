@@ -78,19 +78,16 @@ jobs:
           port: 22
           script: |
             set -e
-            echo "🚀 Verificando directorio de la aplicación en la VM de GCP..."
-            TARGET_DIR=""
-            for dir in "$HOME/Prueba-Whatsapp" "$HOME/prueba-whatsapp" "$HOME/whatsapp-bot" "$HOME/app"; do
-              if [ -d "$dir" ]; then
-                TARGET_DIR="$dir"
-                break
-              fi
-            done
+            export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/snap/bin
+            echo "🚀 Estableciendo directorio de la aplicación ($HOME/app)..."
+            TARGET_DIR="$HOME/app"
 
-            if [ -z "$TARGET_DIR" ]; then
-              echo "📁 Directorio no encontrado. Clonando repositorio en $HOME/Prueba-Whatsapp..."
-              git clone "https://github.com/${{ github.repository }}.git" "$HOME/Prueba-Whatsapp"
-              TARGET_DIR="$HOME/Prueba-Whatsapp"
+            if [ ! -d "$TARGET_DIR" ] && [ -d "$HOME/Prueba-Whatsapp" ]; then
+              echo "📦 Renombrando directorio existente $HOME/Prueba-Whatsapp -> $TARGET_DIR..."
+              mv "$HOME/Prueba-Whatsapp" "$TARGET_DIR"
+            elif [ ! -d "$TARGET_DIR" ]; then
+              echo "📁 Clonando repositorio en $TARGET_DIR..."
+              git clone "https://github.com/${{ github.repository }}.git" "$TARGET_DIR"
             fi
 
             cd "$TARGET_DIR"

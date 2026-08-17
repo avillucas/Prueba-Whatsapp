@@ -73,7 +73,10 @@ Todos los entornos aseguran y montan los siguientes volúmenes persistentes en e
 - **Verificación**: Verificar siempre la suite ejecutando `./ssh/test` y `./ssh/lint` en Docker antes de finalizar la tarea.
 
 ### 4. Despliegue y Entorno
-- Respetar los archivos de configuración de infraestructura (`Dockerfile`, `docker-compose.yml`, `ssh/_common.sh`, `ssh/deploy` y `.github/workflows/deploy.yml`).
+- **Archivos de Infraestructura**: Respetar estrictamente los archivos de configuración de infraestructura (`Dockerfile`, `docker-compose.yml`, `ssh/_common.sh`, `ssh/deploy` y `.github/workflows/deploy.yml`).
+- **Requisitos del Servidor de Despliegue (GCP VM)**: El servidor remoto de producción debe tener instalado Docker Engine y Docker Compose V2, y el usuario SSH debe tener permisos para ejecutar Docker sin `sudo` (`sudo usermod -aG docker $USER`).
+- **PATH en SSH No Interactivo**: `ssh/deploy` y `.github/workflows/deploy.yml` exportan explícitamente `export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/snap/bin` para evitar errores `docker: command not found` (Status 127) durante la ejecución SSH automatizada.
+- **Validación Preventiva**: `ssh/deploy` incluye una comprobación de existencia del comando `docker` con mensaje explicativo de solución antes de intentar construir o levantar contenedores.
 
 ---
 

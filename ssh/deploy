@@ -1,8 +1,22 @@
 #!/bin/bash
 set -e
 
+# Exportar rutas estándar para garantizar disponibilidad de Docker en sesiones SSH no interactivas
+export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/snap/bin
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/_common.sh"
+
+if ! command -v docker &> /dev/null; then
+    echo "❌ Error: 'docker' no se encuentra en el PATH o no está instalado en el servidor remoto."
+    echo "💡 Pasos para solucionar en el servidor de GCP:"
+    echo "   1. Instalar Docker Engine & Docker Compose V2:"
+    echo "      curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh"
+    echo "   2. Agregar el usuario SSH al grupo docker:"
+    echo "      sudo usermod -aG docker \$USER"
+    echo "   3. Reiniciar la sesión SSH o recargar el grupo con: newgrp docker"
+    exit 127
+fi
 
 init_infrastructure
 
@@ -22,3 +36,4 @@ docker compose up -d whatsapp-firestore
 
 echo "✅ Despliegue de producción completado con éxito."
 echo "💡 Para ver los logs y escanear el QR ejecuta: docker compose logs -f whatsapp-firestore"
+
