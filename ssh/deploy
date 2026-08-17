@@ -8,17 +8,17 @@ init_infrastructure
 
 echo "🚀 Iniciando despliegue de producción del WhatsApp Bot (Docker Compose)..."
 
-echo "📦 Construyendo la imagen Docker para whatsapp-firebase..."
-docker compose build whatsapp-firebase
+echo "📦 Construyendo la imagen Docker para whatsapp-firestore..."
+docker compose build whatsapp-firestore
 
-if [ "$(docker ps -aq -f name=whatsapp-firebase)" ]; then
-    echo "🛑 Deteniendo contenedor anterior whatsapp-firebase..."
-    docker compose stop whatsapp-firebase 2>/dev/null || true
-    docker compose rm -f whatsapp-firebase 2>/dev/null || true
+if [ "$(docker ps -aq -f name=whatsapp-firestore)" ]; then
+    echo "🛑 Deteniendo contenedor anterior whatsapp-firestore..."
+    docker compose stop whatsapp-firestore 2>/dev/null || true
+    docker compose rm -f whatsapp-firestore 2>/dev/null || true
 fi
 
 echo "🚀 Levantando contenedor de producción..."
-docker compose up -d whatsapp-firebase
+docker compose up -d whatsapp-firestore
 
 echo "✅ Despliegue de producción completado con éxito."
-echo "💡 Para ver los logs y escanear el QR ejecuta: docker compose logs -f whatsapp-firebase"
+echo "💡 Para ver los logs y escanear el QR ejecuta: docker compose logs -f whatsapp-firestore"

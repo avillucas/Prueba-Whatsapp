@@ -1,19 +1,19 @@
-# Entorno WhatsApp Firebase (`./ssh/whatsapp-firebase`)
+# Entorno WhatsApp Firestore (`./ssh/whatsapp-firestore`)
 
-Este documento detalla la configuración, credenciales y variables de entorno necesarias para ejecutar el bot de WhatsApp en entorno de producción/nube utilizando **Google Cloud Firestore** para la sesión y **Google Sheets** para la persistencia de leads mediante el comando `./ssh/whatsapp-firebase`.
+Este documento detalla la configuración, credenciales y variables de entorno necesarias para ejecutar el bot de WhatsApp en entorno de producción/nube utilizando **Google Cloud Firestore** para la sesión y **Google Sheets** para la persistencia de leads mediante el comando `./ssh/whatsapp-firestore`.
 
 ---
 
 ## 🎯 Descripción del Entorno
 
-El entorno **WhatsApp Firebase** representa la arquitectura completa lista para despliegues distribuidos o producción en la nube (como Google Cloud Virtual Machines o Cloud Run). 
+El entorno **WhatsApp Firestore** representa la arquitectura completa lista para despliegues distribuidos o producción en la nube (como Google Cloud Virtual Machines o Cloud Run). 
 - **Persistencia de Sesión NoSQL**: Utiliza `FirestoreAuthAdapter` para guardar las credenciales y estado del socket de WhatsApp en **Google Cloud Firestore**, eliminando cualquier dependencia de contenedores Redis o archivos locales.
 - **Exportación de Leads**: Persiste contactos y listas de espera directamente en **Google Sheets** (`google_sheets`).
 - **Sistema de Logs**: Soporta logs locales en archivo rotativo o integración directa con **Google Cloud Logging**.
 
-- **Comando de ejecución**: `./ssh/whatsapp-firebase`
-- **Servicio / Perfil Docker**: `whatsapp-firebase` (Perfil Compose: `firebase`)
-- **Contenedor resultante**: `whatsapp-firebase`
+- **Comando de ejecución**: `./ssh/whatsapp-firestore`
+- **Servicio / Perfil Docker**: `whatsapp-firestore` (Perfil Compose: `firestore`)
+- **Contenedor resultante**: `whatsapp-firestore`
 
 ---
 
@@ -99,18 +99,13 @@ LOG_DIR=./logs
 
 ## 🚀 Ejecución y Escaneo del QR
 
-1. Inicia el despliegue con el comando:
+1. Inicia el entorno interactivo con el comando:
    ```bash
-   ./ssh/whatsapp-firebase
+   ./ssh/whatsapp-firestore
    ```
 
-2. El script construirá la imagen Docker y levantará el contenedor en segundo plano (`-d`).
+2. El script construirá la imagen Docker y ejecutará el contenedor en consola.
 
-3. Para visualizar el código QR e interactuar con los registros en vivo, ejecuta:
-   ```bash
-   docker compose logs -f whatsapp-firebase
-   ```
+3. Escanea el código QR desde tu teléfono móvil (WhatsApp > Dispositivos vinculados).
 
-4. Escanea el código QR desde tu teléfono móvil (WhatsApp > Dispositivos vinculados).
-
-5. Una vez autenticado, Firestore almacenará los tokens de sesión bajo la colección `whatsapp_auth`.
+4. Una vez autenticado, Firestore almacenará los tokens de sesión bajo la colección `whatsapp_auth`.

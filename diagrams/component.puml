@@ -17,7 +17,7 @@ node "Docker Host Environment" {
         component [Redis Server Container] as RedisContainer
     }
 
-    package "Contenedor Aplicación (whatsapp-local / whatsapp-firebase / whatsapp-cli)" {
+    package "Contenedor Aplicación (whatsapp-local / whatsapp-firestore / whatsapp-cli)" {
         
         component [Config Engine\n(loadConfig)] as CompConfig
         

@@ -28,7 +28,7 @@ Este repositorio contiene un **WhatsApp Bot minimalista y modular** construido e
 | **CLI Local** | `command` | `redis` / `file` | `csv` | `console` / `file` | Ejecución en consola interactiva (`whatsapp-cli`). |
 | **CLI Sheets** | `command` | `redis` / `file` | `google_sheets` | `console` / `file` | Prueba CLI con exportación a Google Sheets (`whatsapp-cli`). |
 | **WhatsApp Local** | `baileys` | `redis` | `csv` | `file` | Bot con escaneo QR y backend de sesión en Redis (`whatsapp-local` + `redis`). |
-| **WhatsApp Firebase**| `baileys` | `firestore` | `google_sheets` | `file` / `gcp` | Despliegue GCP con sesión Firestore y leads en Google Sheets (`whatsapp-firebase`). |
+| **WhatsApp Firestore**| `baileys` | `firestore` | `google_sheets` | `file` / `gcp` | Despliegue GCP con sesión Firestore y leads en Google Sheets (`whatsapp-firestore`). |
 | **Test & Lint** | `command` | `file` | `csv` | `console` | Ejecución aislada de Jest y ESLint en Docker (`whatsapp-test`). |
 
 ### 4. Gestión de Volúmenes y Persistencia
@@ -50,9 +50,9 @@ Todos los entornos aseguran y montan los siguientes volúmenes persistentes en e
 | **`./ssh/cli`** | Inicia el bot en modo consola CLI interactivo dentro de Docker (`whatsapp-cli`). | [Documentación CLI](./docs/entornos/cli.md) |
 | **`./ssh/cli-googlesheet`** | Inicia el modo CLI interactivo probando la integración con Google Sheets. | [Documentación CLI Google Sheets](./docs/entornos/cli-googlesheet.md) |
 | **`./ssh/whatsapp`** | Inicia la interfaz de WhatsApp Baileys con soporte Redis (`whatsapp-local` + `redis`). | [Documentación WhatsApp Local](./docs/entornos/whatsapp.md) |
-| **`./ssh/whatsapp-firebase`** | Inicia el despliegue del bot con sesión en Firestore/Firebase y leads en Google Sheets. | [Documentación WhatsApp Firebase](./docs/entornos/whatsapp-firebase.md) |
+| **`./ssh/whatsapp-firestore`** | Inicia el despliegue del bot con sesión en Firestore y leads en Google Sheets. | [Documentación WhatsApp Firestore](./docs/entornos/whatsapp-firestore.md) |
 | **`./ssh/whatsapp-storage`** | Inicia el bot de WhatsApp con adaptadores de sesión NoSQL (Redis / Firestore). | [Documentación WhatsApp Storage](./docs/entornos/whatsapp-storage.md) |
-| **`./ssh/deploy`** | Construye y levanta el servicio `whatsapp-firebase` de producción en segundo plano via Compose. | [Documentación Despliegue GCP](./docs/entornos/deploy.md) |
+| **`./ssh/deploy`** | Construye y levanta el servicio `whatsapp-firestore` de producción en segundo plano via Compose. | [Documentación Despliegue GCP](./docs/entornos/deploy.md) |
 | **`./ssh/test`** | Ejecuta la suite de pruebas (**Jest**) dentro del contenedor `whatsapp-test`. | [Documentación Tests](./docs/entornos/test.md) |
 | **`./ssh/lint`** | Ejecuta la verificación de tipos TypeScript (`tsc --noEmit`) y **ESLint** dentro de Docker. | [Documentación Linter](./docs/entornos/lint.md) |
 
