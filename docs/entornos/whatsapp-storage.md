@@ -35,7 +35,7 @@ Dependiendo de la estrategia seleccionada en `AUTH_STORAGE_TYPE`:
 
 ### Modo Firestore (`AUTH_STORAGE_TYPE=firestore`)
 - Requiere cuenta de servicio GCP configurada con rol `Cloud Datastore User` y base de datos Firestore activa.
-- Consulta los pasos detallados en [docs/entornos/whatsapp-firebase.md](./whatsapp-firebase.md).
+- Consulta los pasos detallados en [docs/entornos/whatsapp-firestore.md](./whatsapp-firestore.md).
 
 ### Modo Redis (`AUTH_STORAGE_TYPE=redis`)
 - Utiliza la instancia local de Redis instanciada por Docker Compose.

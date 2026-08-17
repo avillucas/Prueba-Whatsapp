@@ -7,13 +7,13 @@ Este documento detalla la configuración, credenciales, accesos SSH y variables 
 ## 🎯 Descripción del Entorno
 
 El entorno **Deploy** gestiona el ciclo de vida de producción de la aplicación en una Máquina Virtual (VM) de GCP (Compute Engine) o servidor remoto. 
-- Realiza el `build` de la imagen Docker de producción (`whatsapp-firebase`).
+- Realiza el `build` de la imagen Docker de producción (`whatsapp-firestore`).
 - Realiza una parada limpia del contenedor anterior si está en ejecución.
-- Inicia el nuevo contenedor en modo desacoplado (`docker compose up -d whatsapp-firebase`).
+- Inicia el nuevo contenedor en modo desacoplado (`docker compose up -d whatsapp-firestore`).
 - Es invocado automáticamente por el flujo de Integración y Despliegue Continuos (**CI/CD**) en `.github/workflows/deploy.yml` en cada `push` a la rama `main`.
 
 - **Comando de ejecución**: `./ssh/deploy`
-- **Servicio Docker Compose**: `whatsapp-firebase` (Perfil Compose: `firebase`)
+- **Servicio Docker Compose**: `whatsapp-firestore` (Perfil Compose: `firestore`)
 
 ---
 
@@ -107,5 +107,5 @@ Si estás dentro del servidor o máquina remota:
 ### Monitoreo de Logs en Producción
 Para revisar los logs en tiempo real o escanear el QR en producción:
 ```bash
-docker compose logs -f whatsapp-firebase
+docker compose logs -f whatsapp-firestore
 ```
