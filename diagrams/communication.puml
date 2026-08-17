@@ -1,0 +1,23 @@
+@startuml CommunicationDiagram
+top to bottom direction
+title Diagrama de Comunicaciones - Procesamiento de Mensaje y Registro de Lead
+
+object ":WhatsAppAdapter" as WAAdapter
+object ":AuthStorageAdapter" as AuthAdapter
+object ":FlowProvider\n(motor-decision)" as FlowEngine
+object ":SessionLeadManager" as SessionMgr
+object ":LeadValidator" as Validator
+object ":LeadRepository" as Repo
+object ":ErrorHandler" as Logger
+
+WAAdapter -> AuthAdapter : 1: beforeAuth()
+WAAdapter -> FlowEngine : 2: getStep(nodeId)
+WAAdapter -> SessionMgr : 3: getOrCreateSession(jid)
+WAAdapter -> FlowEngine : 4: evaluateResponse(userInput)
+WAAdapter -> SessionMgr : 5: updateSessionData(jid, stepData)
+SessionMgr -> Validator : 6: validate(partialLead)
+WAAdapter -> Repo : 7: save(lead)
+WAAdapter -> AuthAdapter : 8: afterSaveCreds()
+WAAdapter -> Logger : 9: logSystem("WhatsAppAdapter", "Lead procesado")
+
+@enduml

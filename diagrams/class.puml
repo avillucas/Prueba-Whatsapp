@@ -1,0 +1,174 @@
+@startuml ClassDiagram
+!theme plain
+skinparam classAttributeIconSize 0
+
+package "Domain Layer" {
+    interface Lead {
+        + nombre: string
+        + telefono: string
+        + email?: string
+        + customData?: Record<string, any>
+    }
+
+    class LeadValidator {
+        + {static} validate(lead: Partial<Lead>): boolean
+        + {static} sanitizePhoneNumber(phone: string): string
+    }
+
+    interface LeadRepository {
+        + save(lead: Lead): Promise<void>
+        + findAll(): Promise<Lead[]>
+    }
+
+    interface AuthStorageAdapter {
+        + beforeAuth(): Promise<void>
+        + afterSaveCreds(): Promise<void>
+        + getAuthDir(): string
+        + disconnect(): Promise<void>
+    }
+
+    interface LoggerAdapter {
+        + log(level: string, message: string, meta?: any): void
+    }
+}
+
+package "Application Layer" {
+    class SessionLeadManager {
+        - activeSessions: Map<string, Partial<Lead>>
+        + getOrCreateSession(sessionId: string): Partial<Lead>
+        + updateSessionData(sessionId: string, data: Partial<Lead>): void
+        + clearSession(sessionId: string): void
+        + buildLead(sessionId: string): Lead
+    }
+}
+
+package "Infrastructure Layer - Repositories" {
+    class LeadRepositoryFactory {
+        + {static} create(type: string, config: any): LeadRepository
+    }
+
+    class CsvLeadRepository implements LeadRepository {
+        - filePath: string
+        + save(lead: Lead): Promise<void>
+        + findAll(): Promise<Lead[]>
+    }
+
+    class GoogleSheetsLeadRepository implements LeadRepository {
+        - sheetsAdapter: GoogleSheetsAdapter
+        + save(lead: Lead): Promise<void>
+        + findAll(): Promise<Lead[]>
+    }
+
+    class CompositeLeadRepository implements LeadRepository {
+        - repositories: LeadRepository[]
+        + save(lead: Lead): Promise<void>
+        + findAll(): Promise<Lead[]>
+    }
+}
+
+package "Infrastructure Layer - Auth Adapters" {
+    class AuthStorageFactory {
+        + {static} create(type?: string, config?: any): AuthStorageAdapter
+    }
+
+    class RedisAuthAdapter implements AuthStorageAdapter {
+        - redis: any
+        - keyPrefix: string
+        - localDir: string
+        + beforeAuth(): Promise<void>
+        + afterSaveCreds(): Promise<void>
+        + getAuthDir(): string
+        + disconnect(): Promise<void>
+    }
+
+    class FirestoreAuthAdapter implements AuthStorageAdapter {
+        - firestore: any
+        - collectionName: string
+        - localDir: string
+        + beforeAuth(): Promise<void>
+        + afterSaveCreds(): Promise<void>
+        + getAuthDir(): string
+        + disconnect(): Promise<void>
+    }
+}
+
+package "Infrastructure Layer - Logging" {
+    class LoggerFactory {
+        + {static} create(type?: string, config?: any): LoggerAdapter
+    }
+
+    class FileLoggerAdapter implements LoggerAdapter {
+        - logDir: string
+        + log(level: string, message: string, meta?: any): void
+    }
+
+    class GCPLoggerAdapter implements LoggerAdapter {
+        - logging: any
+        + log(level: string, message: string, meta?: any): void
+    }
+
+    class ErrorHandler {
+        - {static} logger: LoggerAdapter
+        + {static} setAdapter(adapter: LoggerAdapter): void
+        + {static} handle(context: string, error: Error, meta?: any): void
+        + {static} logSystem(context: string, message: string): void
+    }
+}
+
+package "Infrastructure Layer - Communication Adapters" {
+    class ConsoleAdapter {
+        - flowProvider: any
+        - leadRepo: LeadRepository
+        - sessionManager: SessionLeadManager
+        + start(): void
+    }
+
+    class WhatsAppAdapter {
+        - flowProvider: any
+        - leadRepo: LeadRepository
+        - authStorage: AuthStorageAdapter
+        - sessionManager: SessionLeadManager
+        + start(): Promise<void>
+        - processMessage(rawMsg: any): Promise<void>
+    }
+
+    class GoogleSheetsAdapter {
+        - doc: any
+        + init(): Promise<void>
+        + appendRow(sheetName: string, rowData: any): Promise<void>
+    }
+}
+
+package "Infrastructure Layer - Utils" {
+    class SessionIdGenerator {
+        + {static} normalizeJid(jid: string): string
+    }
+}
+
+package "Config Module" {
+    class ConfigModule << (F,#FF7700) >> {
+        + loadConfig(): AppConfig
+    }
+}
+
+' Relaciones
+ConsoleAdapter --> LeadRepository : usa
+ConsoleAdapter --> SessionLeadManager : administra
+WhatsAppAdapter --> LeadRepository : usa
+WhatsAppAdapter --> AuthStorageAdapter : usa
+WhatsAppAdapter --> SessionLeadManager : administra
+
+LeadRepositoryFactory ..> CsvLeadRepository : crea
+LeadRepositoryFactory ..> GoogleSheetsLeadRepository : crea
+LeadRepositoryFactory ..> CompositeLeadRepository : crea
+
+AuthStorageFactory ..> RedisAuthAdapter : crea
+AuthStorageFactory ..> FirestoreAuthAdapter : crea
+
+LoggerFactory ..> FileLoggerAdapter : crea
+LoggerFactory ..> GCPLoggerAdapter : crea
+
+GoogleSheetsLeadRepository --> GoogleSheetsAdapter : delega
+SessionLeadManager ..> LeadValidator : valida con
+ErrorHandler --> LoggerAdapter : usa
+@uml

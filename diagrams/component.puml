@@ -1,0 +1,83 @@
+@startuml ComponentDiagram
+!theme plain
+left to right direction
+
+title Diagrama de Componentes e Infraestructura Docker
+
+node "Docker Host Environment" {
+    
+    folder "Volúmenes Montados (Host)" {
+        [./auth_info] as VolAuth
+        [./data] as VolData
+        [./logs] as VolLogs
+        [./flows] as VolFlows
+    }
+
+    package "Contenedor: whatsapp-redis (Profile: local)" {
+        component [Redis Server Container] as RedisContainer
+    }
+
+    package "Contenedor Aplicación (whatsapp-local / whatsapp-firebase / whatsapp-cli)" {
+        
+        component [Config Engine\n(loadConfig)] as CompConfig
+        
+        component [Core Business & Application] as CompCore {
+            portin " " as P_App
+            [SessionLeadManager]
+            [LeadValidator]
+        }
+
+        component [Communication Ports] as CompComm {
+            [WhatsAppAdapter Component]
+            [ConsoleAdapter Component]
+        }
+
+        component [Auth Storage Port] as CompAuth {
+            [RedisAuthAdapter]
+            [FirestoreAuthAdapter]
+        }
+
+        component [Leads Repository Port] as CompRepo {
+            [CsvLeadRepository]
+            [GoogleSheetsLeadRepository]
+            [CompositeLeadRepository]
+        }
+
+        component [Logging Port] as CompLog {
+            [FileLoggerAdapter]
+            [GCPLoggerAdapter]
+        }
+    }
+}
+
+cloud "Google Cloud Platform (GCP)" {
+    database "Cloud Firestore" as GCPFirestore
+    cloud "Google Sheets API" as GCPSheets
+    cloud "GCP Cloud Logging" as GCPLogSvc
+}
+
+node "Red WhatsApp" {
+    component [WhatsApp Web WebSocket] as WACloud
+}
+
+' Conexiones internas
+CompComm --> P_App
+CompComm --> CompAuth
+CompComm --> CompRepo
+CompComm --> CompLog
+CompConfig ..> CompComm : Configura
+
+' Conexiones a volúmenes
+CompAuth ..> VolAuth : Credenciales temporales
+CompRepo ..> VolData : Escribe CSVs
+CompLog ..> VolLogs : Archivos Pino
+CompComm ..> VolFlows : Lee flow_cfp412.json
+
+' Conexiones externas
+CompComm <--> WACloud : WebSocket (Baileys)
+CompAuth <--> RedisContainer : TCP 6379 (ioredis)
+CompAuth <--> GCPFirestore : HTTPS API
+CompRepo <--> GCPSheets : Google APIs Auth
+CompLog <--> GCPLogSvc : Logging API
+
+@enduml
