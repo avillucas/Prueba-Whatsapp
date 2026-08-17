@@ -26,6 +26,7 @@ El entorno **WhatsApp Firestore** representa la arquitectura completa lista para
 | `LEADS_STORAGE_TYPE` | `google_sheets` | Sí | Guarda los leads directamente en la hoja de cálculo de Google. |
 | `AUTH_STORAGE_TYPE` | `firestore` | Sí | Guarda la sesión de WhatsApp en Firestore. |
 | `GCP_PROJECT_ID` | *Definido en `.env`* | **Sí** | ID del proyecto en Google Cloud Platform. |
+| `DATABASE` / `FIRESTORE_DATABASE_ID` | `(default)` | No | ID de la base de datos Firestore dentro del proyecto GCP. |
 | `FIRESTORE_COLLECTION_NAME` | `whatsapp_auth` | No | Nombre de la colección en Firestore para guardar claves de sesión. |
 | `GOOGLE_SPREADSHEET_ID` | *Definido en `.env`* | **Sí** | ID de la hoja de cálculo de Google Sheets. |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | *Definido en `.env`* | **Sí** | Correo electrónico de la Service Account de GCP. |
@@ -81,6 +82,7 @@ AUTH_STORAGE_TYPE=firestore
 
 # GCP / Firestore
 GCP_PROJECT_ID=cfp412-agente
+DATABASE=cfp412-whatsapp
 FIRESTORE_COLLECTION_NAME=whatsapp_auth
 
 # Google Sheets / Service Account

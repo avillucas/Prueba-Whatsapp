@@ -24,6 +24,8 @@ El entorno **WhatsApp Storage** se utiliza para probar y validar adaptadores de 
 | `REDIS_HOST` | `redis` | No | Host del servicio Redis en la red Docker. |
 | `REDIS_PORT` | `6379` | No | Puerto de Redis. |
 | `GCP_PROJECT_ID` | *Definido en `.env`* | Si se usa Firestore | ID del proyecto GCP. |
+| `DATABASE` / `FIRESTORE_DATABASE_ID` | *Definido en `.env`* | Si se usa Firestore | ID de la base de datos Firestore. |
+| `FIRESTORE_COLLECTION_NAME` | `whatsapp_auth` | Si se usa Firestore | Colección de autenticación. |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | *Definido en `.env`* | Si se usa Firestore | Email de Service Account. |
 | `GOOGLE_PRIVATE_KEY` | *Definido en `.env`* | Si se usa Firestore | Clave privada RSA. |
 

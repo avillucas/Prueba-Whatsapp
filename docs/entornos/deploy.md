@@ -30,6 +30,7 @@ El proceso de despliegue requiere dos conjuntos de variables y credenciales: las
 | `LEADS_STORAGE_TYPE` | `google_sheets` | Persistencia en Google Sheets. |
 | `AUTH_STORAGE_TYPE` | `firestore` | Persistencia de sesión en GCP Firestore. |
 | `GCP_PROJECT_ID` | `cfp412-agente` | ID de proyecto GCP. |
+| `DATABASE` / `FIRESTORE_DATABASE_ID` | `cfp412-whatsapp` | ID de la base de datos Firestore dentro de GCP. |
 | `FIRESTORE_COLLECTION_NAME` | `whatsapp_auth` | Colección para la sesión. |
 | `GOOGLE_SPREADSHEET_ID` | *Spreadsheet ID* | ID de la hoja de Google Sheets. |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | *Email Service Account* | Email del bot GCP. |
