@@ -44,6 +44,7 @@ El directorio `./ssh/` contiene scripts listos para interactuar con los contened
 | **`./ssh/whatsapp`** | Inicia la interfaz WhatsApp Baileys dentro de Docker en primer plano (para ver logs y QR). |
 | **`./ssh/cli-googlesheet`** | Inicia el modo CLI probando la integración con Google Sheets en Docker. |
 | **`./ssh/whatsapp-storage`** | Inicia la interfaz de WhatsApp configurando adaptadores de sesión NoSQL. |
+| **`./ssh/whatsapp-firebase`** | Inicia el despliegue del bot con autenticación NoSQL en Firestore/Firebase y persistencia de leads en Google Sheets. |
 
 ---
 

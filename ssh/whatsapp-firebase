@@ -1,0 +1,57 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Iniciando despliegue de WhatsApp Bot con Firebase (Firestore) y Google Sheets..."
+
+# Asegurar que existan los directorios requeridos por los volúmenes
+mkdir -p auth_info data flows logs
+
+# 0. Copiar versión distribuida de motorDecision desde ../motorDecision (ignorado por Git)
+if [ -d "../motorDecision" ]; then
+    echo "🔄 Copiando la librería precompilada desde ../motorDecision..."
+    mkdir -p motorDecision/dist
+    if [ -d "../motorDecision/dist" ]; then
+        cp -r ../motorDecision/dist/* motorDecision/dist/ 2>/dev/null || true
+    fi
+    if [ -f "../motorDecision/package.json" ]; then
+        cp ../motorDecision/package.json motorDecision/package.json 2>/dev/null || true
+    fi
+fi
+
+# 1. Construir la imagen de producción
+echo "📦 Construyendo la imagen Docker de producción..."
+docker build -t whatsapp-bot:latest .
+
+# 2. Detener y eliminar contenedor anterior si existe
+if [ "$(docker ps -aq -f name=whatsapp-firebase)" ]; then
+    echo "🛑 Deteniendo y removiendo contenedor anterior whatsapp-firebase..."
+    docker stop whatsapp-firebase 2>/dev/null || true
+    docker rm whatsapp-firebase 2>/dev/null || true
+fi
+
+# 3. Preparar flag de archivo .env si existe
+ENV_FILE_FLAG=""
+if [ -f ".env" ]; then
+    echo "📄 Cargando variables desde el archivo .env..."
+    ENV_FILE_FLAG="--env-file .env"
+fi
+
+# 4. Ejecutar contenedor de producción en segundo plano con Firebase (Firestore) y Google Sheets
+echo "🚀 Levantando contenedor whatsapp-firebase..."
+docker run -d \
+  --name whatsapp-firebase \
+  --restart unless-stopped \
+  $ENV_FILE_FLAG \
+  -e INTERFACE="${INTERFACE:-baileys}" \
+  -e FLOW_FILE="${FLOW_FILE:-flow_cfp412.json}" \
+  -e LEADS_STORAGE_TYPE="${LEADS_STORAGE_TYPE:-google_sheets}" \
+  -e AUTH_STORAGE_TYPE="${AUTH_STORAGE_TYPE:-firestore}" \
+  -v "$(pwd)/auth_info:/app/auth_info" \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/logs:/app/logs" \
+  -v "$(pwd)/flows:/app/flows" \
+  -it \
+  whatsapp-bot:latest
+
+echo "✅ Despliegue con Firebase y Google Sheets completado con éxito."
+echo "💡 Para ver los logs y escanear el QR ejecuta: docker logs -f whatsapp-firebase"
