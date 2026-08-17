@@ -54,7 +54,7 @@ export function loadConfig(): AppConfig {
     try {
         const fileContent = fs.readFileSync(configPath, 'utf-8');
         config = JSON.parse(fileContent) as AppConfig;
-    } catch (error) {
+    } catch (_error) {
         console.error("Error al cargar el archivo de configuración. Usando valores por defecto.");
         config = {
             interface: 'command',

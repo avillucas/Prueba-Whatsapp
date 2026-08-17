@@ -64,7 +64,7 @@ export class SessionLeadManager {
   private parseTelefono(text: string): Telefono | undefined {
     try {
       return Telefono.crear(text);
-    } catch (e) {
+    } catch (_e) {
       return undefined;
     }
   }
@@ -75,7 +75,7 @@ export class SessionLeadManager {
   private parseEmail(text: string): Email | undefined {
     try {
       return Email.crear(text);
-    } catch (e) {
+    } catch (_e) {
       return undefined;
     }
   }

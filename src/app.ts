@@ -29,7 +29,7 @@ async function main() {
             const flowPath = path.resolve(process.cwd(), 'flows', config.flowFile);
             flowProvider = new JsonFlowAdapter(flowPath, "MSG_INICIAL");
             console.log(`Flujo cargado desde ${flowPath}`);
-        } catch (e) {
+        } catch (_e) {
             console.error("Error crítico al cargar el flujo. Abortando.");
             process.exit(1);
         }
