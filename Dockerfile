@@ -18,10 +18,10 @@ RUN if [ ! -f ./motorDecision/package.json ]; then \
 
 
 # 2. Copiamos los archivos de configuración y dependencias de la app principal
-COPY package.json tsconfig.json jest.config.js .eslintrc.json ./
+COPY package.json package-lock.json* tsconfig.json jest.config.js .eslintrc.json ./
 
 # 3. Instalamos dependencias de la app principal
-RUN npm install
+RUN if [ -f package-lock.json ]; then npm ci ; else npm install ; fi
 
 # 4. Copiamos el código fuente de la app principal
 COPY src ./src
@@ -39,11 +39,11 @@ WORKDIR /app
 # Copiamos motorDecision desde la etapa de construcción
 COPY --from=builder /app/motorDecision ./motorDecision
 
-# Copiamos package.json
-COPY package.json ./
+# Copiamos package.json y package-lock.json
+COPY package.json package-lock.json* ./
 
 # Instalamos dependencias de producción
-RUN npm install --omit=dev
+RUN if [ -f package-lock.json ]; then npm ci --omit=dev ; else npm install --omit=dev ; fi
 
 # Copiamos los archivos compilados desde la etapa de construcción
 COPY --from=builder /app/dist ./dist
