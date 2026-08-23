@@ -13,4 +13,9 @@ export interface AuthStorageAdapter {
    * Retorna la ruta al directorio local utilizado para almacenar temporalmente los archivos de sesión
    */
   getAuthDir(): string;
+
+  /**
+   * Elimina completamente las credenciales y estado de autenticación almacenados
+   */
+  clearAuth(): Promise<void>;
 }

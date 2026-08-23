@@ -2,12 +2,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { RedisAuthAdapter } from '../../infrastructure/adapters/auth/RedisAuthAdapter';
 import { FirestoreAuthAdapter } from '../../infrastructure/adapters/auth/FirestoreAuthAdapter';
-import { AuthStorageFactory } from '../../infrastructure/adapters/auth/AuthStorageFactory';
+import { AuthStorageFactory, createAuthStorageAdapter } from '../../infrastructure/adapters/auth/AuthStorageFactory';
 
 // Mocks de ioredis
 const mockHgetall = jest.fn().mockResolvedValue({});
 const mockHset = jest.fn().mockResolvedValue(1);
 const mockHdel = jest.fn().mockResolvedValue(1);
+const mockDel = jest.fn().mockResolvedValue(1);
 const mockPipelineExec = jest.fn().mockResolvedValue([]);
 const mockPipeline = jest.fn().mockImplementation(() => ({
   hset: mockHset,
@@ -24,6 +25,7 @@ jest.mock('ioredis', () => {
     status: 'wait',
     connect: mockConnect,
     hgetall: mockHgetall,
+    del: mockDel,
     pipeline: mockPipeline,
     quit: mockQuit,
     on: mockOn
@@ -114,6 +116,17 @@ describe('Auth Storage Adapters Suite', () => {
       expect(mockHset).toHaveBeenCalledWith('whatsapp_auth', 'creds.json', '{"me":"test"}');
       expect(mockPipelineExec).toHaveBeenCalled();
     });
+
+    it('debería eliminar credenciales en Redis y borrar archivos locales al llamar a clearAuth', async () => {
+      const adapter = new RedisAuthAdapter({ localDir: testAuthDir });
+      fs.mkdirSync(testAuthDir, { recursive: true });
+      fs.writeFileSync(path.join(testAuthDir, 'creds.json'), '{"me":"test"}');
+
+      await adapter.clearAuth();
+
+      expect(mockDel).toHaveBeenCalledWith('whatsapp_auth');
+      expect(fs.existsSync(path.join(testAuthDir, 'creds.json'))).toBe(false);
+    });
   });
 
   describe('FirestoreAuthAdapter', () => {
@@ -144,9 +157,31 @@ describe('Auth Storage Adapters Suite', () => {
       expect(mockBatch).toHaveBeenCalled();
       expect(mockBatchCommit).toHaveBeenCalled();
     });
+
+    it('debería eliminar credenciales en Firestore y borrar archivos locales al llamar a clearAuth', async () => {
+      const adapter = new FirestoreAuthAdapter({
+        collectionName: 'whatsapp_auth',
+        localDir: testAuthDir
+      });
+
+      fs.mkdirSync(testAuthDir, { recursive: true });
+      fs.writeFileSync(path.join(testAuthDir, 'creds.json'), '{"me":"test"}');
+
+      await adapter.clearAuth();
+
+      expect(mockCollectionGet).toHaveBeenCalled();
+      expect(mockBatchDelete).toHaveBeenCalled();
+      expect(mockBatchCommit).toHaveBeenCalled();
+      expect(fs.existsSync(path.join(testAuthDir, 'creds.json'))).toBe(false);
+    });
   });
 
   describe('AuthStorageFactory', () => {
+    it('debería retornar un adaptador usando la función auxiliar createAuthStorageAdapter', () => {
+      const adapter = createAuthStorageAdapter('redis');
+      expect(adapter).toBeInstanceOf(RedisAuthAdapter);
+    });
+
     it('debería retornar RedisAuthAdapter por defecto si no se especifica tipo', () => {
       const adapter = AuthStorageFactory.create();
       expect(adapter).toBeInstanceOf(RedisAuthAdapter);

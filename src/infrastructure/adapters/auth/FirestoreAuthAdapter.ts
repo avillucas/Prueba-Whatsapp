@@ -139,4 +139,38 @@ export class FirestoreAuthAdapter implements AuthStorageAdapter {
   getAuthDir(): string {
     return this.localDir;
   }
+
+  private clearLocalDir(): void {
+    if (fs.existsSync(this.localDir)) {
+      try {
+        const files = fs.readdirSync(this.localDir);
+        for (const file of files) {
+          const fullPath = path.join(this.localDir, file);
+          if (fs.statSync(fullPath).isFile()) {
+            fs.unlinkSync(fullPath);
+          }
+        }
+      } catch (e: any) {
+        ErrorHandler.logSystem('FirestoreAuthAdapter', `Error al limpiar directorio local: ${e.message}`);
+      }
+    }
+  }
+
+  async clearAuth(): Promise<void> {
+    try {
+      const collectionRef = this.firestore.collection(this.collectionName);
+      const snapshot = await collectionRef.get();
+      if (!snapshot.empty) {
+        const batch = this.firestore.batch();
+        for (const doc of snapshot.docs) {
+          batch.delete(doc.ref);
+        }
+        await batch.commit();
+      }
+      ErrorHandler.logSystem('FirestoreAuthAdapter', `Credenciales eliminadas de Firestore (Colección: '${this.collectionName}').`);
+    } catch (error: any) {
+      ErrorHandler.logSystem('FirestoreAuthAdapter', `Error al eliminar credenciales en Firestore: ${error.message}`);
+    }
+    this.clearLocalDir();
+  }
 }

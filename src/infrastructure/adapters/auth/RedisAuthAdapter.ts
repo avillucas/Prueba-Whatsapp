@@ -127,6 +127,33 @@ export class RedisAuthAdapter implements AuthStorageAdapter {
     return this.localDir;
   }
 
+  private clearLocalDir(): void {
+    if (fs.existsSync(this.localDir)) {
+      try {
+        const files = fs.readdirSync(this.localDir);
+        for (const file of files) {
+          const fullPath = path.join(this.localDir, file);
+          if (fs.statSync(fullPath).isFile()) {
+            fs.unlinkSync(fullPath);
+          }
+        }
+      } catch (e: any) {
+        ErrorHandler.logSystem('RedisAuthAdapter', `Error al limpiar directorio local: ${e.message}`);
+      }
+    }
+  }
+
+  async clearAuth(): Promise<void> {
+    try {
+      await this.ensureConnected();
+      await this.redis.del(this.keyPrefix);
+      ErrorHandler.logSystem('RedisAuthAdapter', `Credenciales eliminadas de Redis (Hash: '${this.keyPrefix}').`);
+    } catch (error: any) {
+      ErrorHandler.logSystem('RedisAuthAdapter', `Error al eliminar credenciales en Redis: ${error.message}`);
+    }
+    this.clearLocalDir();
+  }
+
   async disconnect(): Promise<void> {
     if (this.redis.status !== 'end') {
       await this.redis.quit();

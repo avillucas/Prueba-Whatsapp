@@ -299,4 +299,44 @@ describe("WhatsAppAdapter", () => {
     });
     expect(mockSock.sendMessage).toHaveBeenCalledWith("500@lid", { text: "Menú Principal" }, expect.anything());
   });
+
+  it("Debería retornar estado, QR y usuario conectado correctamente", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    expect(adapter.getStatus()).toBe('DISCONNECTED');
+    expect(adapter.getQR()).toBeNull();
+    expect(adapter.getConnectedUser()).toBeNull();
+
+    await adapter.start();
+
+    // Simular evento QR
+    eventListeners['connection.update']({ qr: 'test_qr_code' });
+    expect(adapter.getStatus()).toBe('WAITING_QR');
+    expect(adapter.getQR()).toBe('test_qr_code');
+
+    // Simular evento connection open
+    eventListeners['connection.update']({ connection: 'open' });
+    expect(adapter.getStatus()).toBe('CONNECTED');
+    expect(adapter.getQR()).toBeNull();
+
+    // Simular evento connection close
+    eventListeners['connection.update']({ connection: 'close', lastDisconnect: { error: { output: { statusCode: 500 } } } });
+    expect(adapter.getStatus()).toBe('DISCONNECTED');
+  });
+
+  it("Debería reiniciar la cuenta y limpiar la autenticación al llamar a resetAccount", async () => {
+    const mockAuthStorage = {
+      beforeAuth: jest.fn().mockResolvedValue(undefined),
+      afterSaveCreds: jest.fn().mockResolvedValue(undefined),
+      getAuthDir: jest.fn().mockReturnValue('./test_auth'),
+      clearAuth: jest.fn().mockResolvedValue(undefined)
+    };
+
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo, mockAuthStorage as any);
+    await adapter.start();
+
+    await adapter.resetAccount();
+
+    expect(mockAuthStorage.clearAuth).toHaveBeenCalled();
+    expect(adapter.getStatus()).toBe('DISCONNECTED');
+  });
 });

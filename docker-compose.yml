@@ -34,6 +34,8 @@ services:
     container_name: whatsapp-bot
     depends_on:
       - redis
+    ports:
+      - "${ADMIN_PORT:-3000}:${ADMIN_PORT:-3000}"
     environment:
       - INTERFACE=${INTERFACE:-baileys}
       - FLOW_FILE=${FLOW_FILE:-flow_cfp412.json}
@@ -42,17 +44,23 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - LOG_DIR=./logs
+      - ADMIN_PORT=${ADMIN_PORT:-3000}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     profiles: ["local", "default"]
 
   whatsapp-firestore:
     <<: *app-base
     container_name: whatsapp-firestore
+    ports:
+      - "${ADMIN_PORT:-3000}:${ADMIN_PORT:-3000}"
     environment:
       - INTERFACE=${INTERFACE:-baileys}
       - FLOW_FILE=${FLOW_FILE:-flow_cfp412.json}
       - LEADS_STORAGE_TYPE=${LEADS_STORAGE_TYPE:-google_sheets}
       - AUTH_STORAGE_TYPE=${AUTH_STORAGE_TYPE:-firestore}
       - LOG_DIR=./logs
+      - ADMIN_PORT=${ADMIN_PORT:-3000}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     profiles: ["firestore", "firebase"]
 
   whatsapp-cli:

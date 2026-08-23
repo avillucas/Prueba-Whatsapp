@@ -35,6 +35,12 @@ export interface LoggingConfig {
     logDir?: string;
 }
 
+export interface AdminWebConfig {
+    enabled?: boolean;
+    port?: number;
+    password?: string;
+}
+
 export interface AppConfig {
     interface: 'command' | 'baileys';
     inputAdapter: 'file';
@@ -46,6 +52,7 @@ export interface AppConfig {
     };
     authStorage?: AuthStorageConfig;
     loggingStorage?: LoggingConfig;
+    adminWeb?: AdminWebConfig;
 }
 
 export function loadConfig(): AppConfig {
@@ -191,6 +198,27 @@ export function loadConfig(): AppConfig {
                 `[ConfigError] Google Sheets está activo ('${config.leadsStorage.type}') pero faltan los datos de autenticación obligatorios: ${missingParams.join(', ')}.`
             );
         }
+    }
+
+    // Inicializar sub-objeto adminWeb si no existe
+    if (!config.adminWeb) {
+        config.adminWeb = {
+            enabled: true,
+            port: 3000,
+            password: 'admin123'
+        };
+    }
+
+    if (process.env.ADMIN_WEB_ENABLED !== undefined) {
+        config.adminWeb.enabled = process.env.ADMIN_WEB_ENABLED === 'true' || process.env.ADMIN_WEB_ENABLED === '1';
+    }
+
+    if (process.env.ADMIN_PORT) {
+        config.adminWeb.port = Number(process.env.ADMIN_PORT) || 3000;
+    }
+
+    if (process.env.ADMIN_PASSWORD) {
+        config.adminWeb.password = process.env.ADMIN_PASSWORD;
     }
 
     return config;

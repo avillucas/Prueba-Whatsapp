@@ -12,6 +12,8 @@ import { ErrorHandler } from '../logging/ErrorHandler';
 import { AuthStorageAdapter } from '../../domain/AuthStorageAdapter';
 import { AuthStorageFactory } from './auth/AuthStorageFactory';
 
+export type ConnectionStatus = 'DISCONNECTED' | 'WAITING_QR' | 'CONNECTED';
+
 // Interfaz para mantener el estado de la conversación activa por usuario
 interface ActiveSession {
   sessionId: string; // El ID generado con MAC y Timestamp
@@ -26,10 +28,56 @@ export class WhatsAppAdapter {
 
   private lidMap = new Map<string, string>();
 
+  private currentSock: any = null;
+  private status: ConnectionStatus = 'DISCONNECTED';
+  private currentQr: string | null = null;
+  private connectedUser: string | null = null;
+
   constructor(flowProvider: FlowProvider, leadRepo: LeadRepository, authStorage?: AuthStorageAdapter) {
     this.leadManager = new SessionLeadManager(leadRepo);
     this.flowProvider = flowProvider;
     this.authStorage = authStorage || AuthStorageFactory.create();
+  }
+
+  public getStatus(): ConnectionStatus {
+    return this.status;
+  }
+
+  public getQR(): string | null {
+    return this.currentQr;
+  }
+
+  public getConnectedUser(): string | null {
+    return this.connectedUser;
+  }
+
+  public async resetAccount(): Promise<void> {
+    ErrorHandler.logSystem('WhatsAppAdapter', 'Iniciando reseteo manual de cuenta de WhatsApp desde panel web...');
+    this.status = 'DISCONNECTED';
+    this.currentQr = null;
+    this.connectedUser = null;
+    this.activeSessions.clear();
+
+    if (this.currentSock) {
+      try {
+        if (this.currentSock.ev) {
+          this.currentSock.ev.removeAllListeners('connection.update');
+          this.currentSock.ev.removeAllListeners('messages.upsert');
+          this.currentSock.ev.removeAllListeners('creds.update');
+        }
+        if (typeof this.currentSock.end === 'function') {
+          this.currentSock.end(undefined);
+        }
+      } catch (err: any) {
+        ErrorHandler.logSystem('WhatsAppAdapter', `Aviso al cerrar socket previo: ${err.message}`);
+      }
+      this.currentSock = null;
+    }
+
+    await this.authStorage.clearAuth();
+    ErrorHandler.logSystem('WhatsAppAdapter', 'Credenciales limpiadas exitosamente. Iniciando reconexión limpia...');
+
+    await this.start();
   }
 
   private async resolveJid(sock: any, msg: any): Promise<string> {
@@ -115,6 +163,8 @@ export class WhatsAppAdapter {
       logger
     });
 
+    this.currentSock = sock;
+
     sock.ev.on('creds.update', async () => {
       await saveCreds();
       await this.authStorage.afterSaveCreds();
@@ -124,11 +174,18 @@ export class WhatsAppAdapter {
       const { connection, lastDisconnect, qr } = update;
       
       if (qr) {
+        this.status = 'WAITING_QR';
+        this.currentQr = qr;
+        this.connectedUser = null;
         console.log('\n📱 Escanea el siguiente código QR con tu WhatsApp para conectar el Bot:\n');
         qrcode.generate(qr, { small: true });
       }
 
       if (connection === 'close') {
+        this.status = 'DISCONNECTED';
+        this.currentQr = null;
+        this.connectedUser = null;
+
         const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
         const isLoggedOut = statusCode === DisconnectReason.loggedOut;
         ErrorHandler.logSystem('WhatsAppAdapter', `Conexión cerrada. Status: ${statusCode || 'desconocido'}. Reintentando conexión...`);
@@ -152,8 +209,12 @@ export class WhatsAppAdapter {
           });
         }, 2000);
       } else if (connection === 'open') {
+        this.status = 'CONNECTED';
+        this.currentQr = null;
+        const userJid = sock.user?.id || sock.user?.jid || 'WhatsApp Dispositivo Vinculado';
+        this.connectedUser = userJid;
         console.log('\n✅ ¡Bot de WhatsApp conectado y listo para recibir mensajes!\n');
-        ErrorHandler.logSystem('WhatsAppAdapter', 'Conexión establecida con éxito.');
+        ErrorHandler.logSystem('WhatsAppAdapter', `Conexión establecida con éxito. Dispositivo: ${userJid}`);
       }
     });
 

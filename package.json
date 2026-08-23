@@ -14,15 +14,19 @@
   "dependencies": {
     "@google-cloud/firestore": "^7.10.0",
     "@whiskeysockets/baileys": "^6.7.9",
+    "express": "^4.19.2",
     "ioredis": "^5.4.1",
     "motor-decision": "file:./motorDecision",
     "pino": "^9.0.0",
+    "qrcode": "^1.5.3",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
     "@hapi/boom": "^10.0.1",
+    "@types/express": "^4.17.21",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
+    "@types/qrcode": "^1.5.5",
     "@types/qrcode-terminal": "^0.12.2",
     "@typescript-eslint/eslint-plugin": "^8.67.0",
     "@typescript-eslint/parser": "^8.67.0",

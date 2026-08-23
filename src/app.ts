@@ -6,6 +6,7 @@ import { LeadRepositoryFactory } from './infrastructure/repositories/LeadReposit
 import { AuthStorageFactory } from './infrastructure/adapters/auth/AuthStorageFactory';
 import { LoggerFactory } from './infrastructure/adapters/logging/LoggerFactory';
 import { ErrorHandler } from './infrastructure/logging/ErrorHandler';
+import { AdminServer } from './infrastructure/web/AdminServer';
 import * as path from 'path';
 
 async function main() {
@@ -49,6 +50,12 @@ async function main() {
         adapter.start();
     } else if (config.interface === 'baileys') {
         const adapter = new WhatsAppAdapter(flowProvider, leadRepo, authStorage);
+
+        if (config.adminWeb?.enabled !== false) {
+            const adminServer = new AdminServer(config, adapter);
+            await adminServer.start();
+        }
+
         await adapter.start();
         // Mantener el proceso activo para evitar que el contenedor de Docker finalice
         await new Promise(() => { });
