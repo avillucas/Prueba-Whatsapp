@@ -1,5 +1,4 @@
 import { loadConfig } from './config/config';
-import { JsonFlowAdapter } from 'motor-decision';
 import { ConsoleAdapter } from './infrastructure/adapters/ConsoleAdapter';
 import { WhatsAppAdapter } from './infrastructure/adapters/WhatsAppAdapter';
 import { LeadRepositoryFactory } from './infrastructure/repositories/LeadRepositoryFactory';
@@ -7,6 +6,7 @@ import { AuthStorageFactory } from './infrastructure/adapters/auth/AuthStorageFa
 import { LoggerFactory } from './infrastructure/adapters/logging/LoggerFactory';
 import { ErrorHandler } from './infrastructure/logging/ErrorHandler';
 import { AdminServer } from './infrastructure/web/AdminServer';
+import { DecisionTreeManager } from './application/DecisionTreeManager';
 import * as path from 'path';
 
 async function main() {
@@ -24,15 +24,23 @@ async function main() {
 
     console.log(`Cargando configuración... Interface: ${config.interface}, Entrada: ${config.inputAdapter}, Almacenamiento: ${config.leadsStorage.type}`);
 
+    const flowManager = new DecisionTreeManager(path.resolve(process.cwd(), 'flows'));
     let flowProvider;
     if (config.inputAdapter === 'file') {
         try {
-            const flowPath = path.resolve(process.cwd(), 'flows', config.flowFile);
-            flowProvider = new JsonFlowAdapter(flowPath, "MSG_INICIAL");
-            console.log(`Flujo cargado desde ${flowPath}`);
+            const flowId = path.basename(config.flowFile, '.json');
+            flowProvider = flowManager.getFlowProvider(flowId);
+            console.log(`Gestor de árboles de decisión cargó el flujo: '${flowId}'`);
         } catch (_e) {
-            console.error("Error crítico al cargar el flujo. Abortando.");
-            process.exit(1);
+            try {
+                const flowPath = path.resolve(process.cwd(), 'flows', config.flowFile);
+                flowManager.registerFlowFromFile('default', flowPath);
+                flowProvider = flowManager.getFlowProvider('default');
+                console.log(`Flujo cargado desde ${flowPath}`);
+            } catch (err: any) {
+                console.error(`Error crítico al cargar el flujo: ${err.message}. Abortando.`);
+                process.exit(1);
+            }
         }
     } else {
         console.error(`Adaptador de entrada '${config.inputAdapter}' no soportado aún.`);

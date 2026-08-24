@@ -9,7 +9,7 @@
     "dev": "ts-node src/app.ts",
     "command": "ts-node src/app.ts",
     "lint": "tsc --noEmit && eslint src --ext .ts",
-    "test": "jest"
+    "test": "jest --forceExit"
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.10.0",

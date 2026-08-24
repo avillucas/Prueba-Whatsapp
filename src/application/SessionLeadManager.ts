@@ -33,6 +33,26 @@ export class SessionLeadManager {
   }
 
   /**
+   * Devuelve todos los datos recolectados para una sesión en particular.
+   */
+  getAllSessionData(sessionId: string): Record<string, string> | undefined {
+    const data = this.sessionData.get(sessionId);
+    return data ? { ...data } : undefined;
+  }
+
+  /**
+   * Determina si un campo de extracción de nodo debe saltearse por ya disponer de un valor válido.
+   */
+  shouldSkipNode(sessionId: string, extractDataField?: string): boolean {
+    if (!extractDataField) return false;
+    // Las opciones de menú o acciones de reinicio no deben saltearse automáticamente
+    if (extractDataField === 'Opcion_Elegida' || extractDataField === 'Accion_Reinicio') {
+      return false;
+    }
+    return this.hasValidField(sessionId, extractDataField);
+  }
+
+  /**
    * Verifica si un campo ya posee un valor válido almacenado en la sesión.
    */
   hasValidField(sessionId: string, key: string): boolean {

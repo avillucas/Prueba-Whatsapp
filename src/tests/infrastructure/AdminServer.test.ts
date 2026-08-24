@@ -53,6 +53,7 @@ describe('AdminServer Test Suite', () => {
       const port = typeof address === 'object' ? address.port : 0;
 
       const requestBody = body ? (typeof body === 'string' ? body : JSON.stringify(body)) : '';
+      headers['Connection'] = 'close';
       if (body && typeof body === 'object') {
         headers['Content-Type'] = headers['Content-Type'] || 'application/json';
       }
