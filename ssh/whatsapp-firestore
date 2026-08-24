@@ -20,4 +20,4 @@ echo "🚀 Levantando contenedor whatsapp-firestore en modo interactivo..."
 echo "💡 Escanea el código QR y observa la sincronización con Firestore en pantalla."
 echo "----------------------------------------------------------------------"
 
-docker compose run --rm --name whatsapp-firestore whatsapp-firestore
+docker compose run --service-ports --rm --name whatsapp-firestore whatsapp-firestore

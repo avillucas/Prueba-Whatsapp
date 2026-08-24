@@ -104,7 +104,7 @@
   },
   {
     "id": "RESP_C_FIN",
-    "text": "¡Perfecto! Registramos tus datos. Si se libera una vacante nos comunicaremos con vos. (También puedo ofrecerte el trayecto de CAD: https://abc.gob.ar/formacion_profesional/buscador/1492)",
+    "text": "¡Perfecto! Registramos tus datos. Si se libera una vacante nos comunicaremos con vos. ",
     "options": [
       {
         "match": "*",

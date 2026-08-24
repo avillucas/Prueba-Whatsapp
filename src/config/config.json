@@ -27,5 +27,9 @@
   "loggingStorage": {
     "type": "file",
     "logDir": "./logs"
+  },
+  "sessionConfig": {
+    "timeoutMinutes": 15,
+    "phoneFlowMap": {}
   }
 }

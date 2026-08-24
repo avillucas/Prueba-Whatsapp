@@ -41,6 +41,11 @@ export interface AdminWebConfig {
     password?: string;
 }
 
+export interface SessionConfig {
+    timeoutMinutes?: number;
+    phoneFlowMap?: Record<string, string>;
+}
+
 export interface AppConfig {
     interface: 'command' | 'baileys';
     inputAdapter: 'file';
@@ -53,6 +58,7 @@ export interface AppConfig {
     authStorage?: AuthStorageConfig;
     loggingStorage?: LoggingConfig;
     adminWeb?: AdminWebConfig;
+    sessionConfig?: SessionConfig;
 }
 
 export function loadConfig(): AppConfig {
@@ -219,6 +225,18 @@ export function loadConfig(): AppConfig {
 
     if (process.env.ADMIN_PASSWORD) {
         config.adminWeb.password = process.env.ADMIN_PASSWORD;
+    }
+
+    // Inicializar sub-objeto sessionConfig si no existe
+    if (!config.sessionConfig) {
+        config.sessionConfig = {
+            timeoutMinutes: 15,
+            phoneFlowMap: {}
+        };
+    }
+
+    if (process.env.SESSION_TIMEOUT_MINUTES) {
+        config.sessionConfig.timeoutMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES) || 15;
     }
 
     return config;

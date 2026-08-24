@@ -255,4 +255,45 @@ describe('AdminServer Test Suite', () => {
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).success).toBe(true);
   });
+
+  it('debería listar flujos en GET /api/flows', async () => {
+    await adminServer.start();
+    const res = await makeRequest('GET', '/api/flows', {
+      Cookie: 'admin_session=testpassword123'
+    });
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.flows).toBeDefined();
+    expect(Array.isArray(data.flows)).toBe(true);
+  });
+
+  it('debería obtener un flujo por ID en GET /api/flows/:id', async () => {
+    await adminServer.start();
+    const res = await makeRequest('GET', '/api/flows/flow_cfp412', {
+      Cookie: 'admin_session=testpassword123'
+    });
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.id).toBe('flow_cfp412');
+    expect(Array.isArray(data.nodes)).toBe(true);
+  });
+
+  it('debería guardar un flujo en POST /api/flows/:id', async () => {
+    await adminServer.start();
+    const testNodes = [{ id: 'TEST', text: 'Hola', options: [] }];
+    const res = await makeRequest('POST', '/api/flows/flow_test_temp', {
+      Cookie: 'admin_session=testpassword123'
+    }, { nodes: testNodes });
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.success).toBe(true);
+  });
+
+  it('debería retornar error 400 si nodes no es un arreglo en POST /api/flows/:id', async () => {
+    await adminServer.start();
+    const res = await makeRequest('POST', '/api/flows/flow_invalid', {
+      Cookie: 'admin_session=testpassword123'
+    }, { nodes: 'invalid' });
+    expect(res.statusCode).toBe(400);
+  });
 });

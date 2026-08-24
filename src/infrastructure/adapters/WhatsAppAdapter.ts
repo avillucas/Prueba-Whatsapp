@@ -11,13 +11,17 @@ import { ErrorHandler } from '../logging/ErrorHandler';
 
 import { AuthStorageAdapter } from '../../domain/AuthStorageAdapter';
 import { AuthStorageFactory } from './auth/AuthStorageFactory';
+import { DecisionTreeManager } from '../../application/DecisionTreeManager';
+import { SessionConfig } from '../../config/config';
 
 export type ConnectionStatus = 'DISCONNECTED' | 'WAITING_QR' | 'CONNECTED';
 
 // Interfaz para mantener el estado de la conversación activa por usuario
-interface ActiveSession {
+export interface ActiveSession {
   sessionId: string; // El ID generado con MAC y Timestamp
   engine: DecisionEngine;
+  flowId: string;
+  lastActivityAt: number; // Timestamp en ms
 }
 
 export class WhatsAppAdapter {
@@ -25,6 +29,9 @@ export class WhatsAppAdapter {
   private leadManager: SessionLeadManager;
   private flowProvider: FlowProvider;
   private authStorage: AuthStorageAdapter;
+  private flowManager?: DecisionTreeManager;
+  private sessionConfig: SessionConfig;
+  private timeoutTimer: any = null;
 
   private lidMap = new Map<string, string>();
 
@@ -33,10 +40,20 @@ export class WhatsAppAdapter {
   private currentQr: string | null = null;
   private connectedUser: string | null = null;
 
-  constructor(flowProvider: FlowProvider, leadRepo: LeadRepository, authStorage?: AuthStorageAdapter) {
+  constructor(
+    flowProvider: FlowProvider,
+    leadRepo: LeadRepository,
+    authStorage?: AuthStorageAdapter,
+    flowManager?: DecisionTreeManager,
+    sessionConfig?: SessionConfig
+  ) {
     this.leadManager = new SessionLeadManager(leadRepo);
     this.flowProvider = flowProvider;
     this.authStorage = authStorage || AuthStorageFactory.create();
+    this.flowManager = flowManager;
+    this.sessionConfig = sessionConfig || { timeoutMinutes: 15, phoneFlowMap: {} };
+
+    this.startTimeoutChecker();
   }
 
   public getStatus(): ConnectionStatus {
@@ -49,6 +66,78 @@ export class WhatsAppAdapter {
 
   public getConnectedUser(): string | null {
     return this.connectedUser;
+  }
+
+  public updateSessionConfig(config: SessionConfig): void {
+    this.sessionConfig = { ...this.sessionConfig, ...config };
+  }
+
+  public getSessionConfig(): SessionConfig {
+    return this.sessionConfig;
+  }
+
+  public getActiveSessionsCount(): number {
+    return this.activeSessions.size;
+  }
+
+  public startTimeoutChecker(): void {
+    if (this.timeoutTimer) return;
+    this.timeoutTimer = setInterval(() => {
+      this.checkSessionTimeouts().catch((err) => {
+        ErrorHandler.handle('WhatsAppAdapter', err);
+      });
+    }, 30000);
+  }
+
+  public stopTimeoutChecker(): void {
+    if (this.timeoutTimer) {
+      clearInterval(this.timeoutTimer);
+      this.timeoutTimer = null;
+    }
+  }
+
+  public async checkSessionTimeouts(): Promise<void> {
+    const timeoutMinutes = this.sessionConfig?.timeoutMinutes || 15;
+    const timeoutMs = timeoutMinutes * 60 * 1000;
+    const now = Date.now();
+
+    for (const [remoteJid, session] of Array.from(this.activeSessions.entries())) {
+      if (now - session.lastActivityAt >= timeoutMs) {
+        ErrorHandler.logSystem('WhatsAppAdapter', `Sesión ${session.sessionId} para ${remoteJid} expiró por inactividad (${timeoutMinutes} min). Cerrando...`);
+
+        await this.leadManager.finalizeSession(session.sessionId);
+        this.activeSessions.delete(remoteJid);
+
+        if (this.currentSock && this.status === 'CONNECTED') {
+          try {
+            await this.currentSock.sendMessage(remoteJid, {
+              text: "⚠️ La conversación se ha cerrado automáticamente por inactividad. ¡Escríbenos de nuevo cuando desees volver a comenzar!"
+            });
+          } catch (e: any) {
+            ErrorHandler.logSystem('WhatsAppAdapter', `No se pudo enviar mensaje de cierre por inactividad a ${remoteJid}: ${e.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  public getFlowIdForPhone(remoteJid: string): string {
+    const rawPhone = remoteJid.replace(/@.*$/, '');
+    const map = this.sessionConfig?.phoneFlowMap || {};
+
+    if (map[rawPhone]) return map[rawPhone];
+    if (map[remoteJid]) return map[remoteJid];
+
+    for (const key of Object.keys(map)) {
+      const cleanKey = key.replace(/[^0-9]/g, '');
+      if (cleanKey && rawPhone.startsWith(cleanKey)) {
+        return map[key];
+      }
+    }
+
+    if (map['default']) return map['default'];
+    if (this.flowManager) return this.flowManager.getDefaultFlowId();
+    return 'flow_cfp412';
   }
 
   public async resetAccount(): Promise<void> {
@@ -92,7 +181,6 @@ export class WhatsAppAdapter {
       return rawJid;
     }
 
-    // 1. Buscar en senderPn (msg.key.senderPn)
     if (key.senderPn && typeof key.senderPn === 'string') {
       const cleanPn = key.senderPn.replace(/@.*$/, '');
       const pnJid = `${cleanPn}@s.whatsapp.net`;
@@ -100,7 +188,6 @@ export class WhatsAppAdapter {
       return pnJid;
     }
 
-    // 2. Buscar en remoteJidAlt (msg.key.remoteJidAlt)
     if (key.remoteJidAlt && typeof key.remoteJidAlt === 'string') {
       let pnJid = key.remoteJidAlt;
       if (!pnJid.endsWith('@s.whatsapp.net')) {
@@ -111,7 +198,6 @@ export class WhatsAppAdapter {
       return pnJid;
     }
 
-    // 3. Buscar en participantAlt (msg.key.participantAlt o msg.participantAlt)
     const partAlt = key.participantAlt || msg.participantAlt;
     if (partAlt && typeof partAlt === 'string') {
       const cleanPn = partAlt.replace(/@.*$/, '');
@@ -120,19 +206,16 @@ export class WhatsAppAdapter {
       return pnJid;
     }
 
-    // 4. Buscar en participant (msg.key.participant o msg.participant) si termina en @s.whatsapp.net
     const part = key.participant || msg.participant;
     if (part && typeof part === 'string' && part.endsWith('@s.whatsapp.net')) {
       this.lidMap.set(rawJid, part);
       return part;
     }
 
-    // 5. Buscar en nuestro mapa de LID a PN acumulado en memoria
     if (this.lidMap.has(rawJid)) {
       return this.lidMap.get(rawJid)!;
     }
 
-    // 6. Intentar resolver usando signalRepository.lidMapping de Baileys si está disponible
     try {
       if (sock?.signalRepository?.lidMapping?.getPNForLID) {
         const pn = await sock.signalRepository.lidMapping.getPNForLID(rawJid);
@@ -154,7 +237,6 @@ export class WhatsAppAdapter {
     await this.authStorage.beforeAuth();
     const { state, saveCreds } = await useMultiFileAuthState(this.authStorage.getAuthDir());
     
-    // Configuramos pino logger para evitar que ensucie la consola
     const logger = pino({ level: 'silent' }) as any;
 
     const sock = makeWASocket({
@@ -260,12 +342,25 @@ export class WhatsAppAdapter {
     // 1. Obtener o crear la sesión activa para este usuario
     if (!this.activeSessions.has(remoteJid)) {
       const sessionId = SessionIdGenerator.generate(remoteJid);
-      ErrorHandler.logSystem('WhatsAppAdapter', `Nueva sesión iniciada: ${sessionId} para ${remoteJid}`);
+      const flowId = this.getFlowIdForPhone(remoteJid);
+      ErrorHandler.logSystem('WhatsAppAdapter', `Nueva sesión iniciada: ${sessionId} para ${remoteJid} usando flujo '${flowId}'`);
       
-      const engine = new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId());
+      let engine: DecisionEngine;
+      if (this.flowManager) {
+        try {
+          engine = this.flowManager.createEngine(flowId);
+        } catch (_err) {
+          engine = new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId());
+        }
+      } else {
+        engine = new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId());
+      }
+
       this.activeSessions.set(remoteJid, {
         sessionId: sessionId,
-        engine: engine
+        engine: engine,
+        flowId: flowId,
+        lastActivityAt: Date.now()
       });
 
       const isPhoneNumber = remoteJid.endsWith('@s.whatsapp.net');
@@ -285,6 +380,7 @@ export class WhatsAppAdapter {
     }
 
     const session = this.activeSessions.get(remoteJid)!;
+    session.lastActivityAt = Date.now();
     
     if (text.toLowerCase() === 'salir' || text.toLowerCase() === 'menu') {
       await this.leadManager.finalizeSession(session.sessionId);
@@ -315,7 +411,6 @@ export class WhatsAppAdapter {
       let targetNode = nextNode;
       const visitedNodes = new Set<string>();
 
-      // No auto-completar selecciones de menú o acciones de navegación
       const isAutoCompletable = (field: string) => {
         return field !== 'Opcion_Elegida' && field !== 'Accion_Reinicio';
       };

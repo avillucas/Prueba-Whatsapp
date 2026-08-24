@@ -106,6 +106,8 @@ jobs:
             FLOW_FILE=${{ secrets.FLOW_FILE || 'flow_cfp412.json' }}
             LEADS_STORAGE_TYPE=${{ secrets.LEADS_STORAGE_TYPE || 'google_sheets' }}
             AUTH_STORAGE_TYPE=${{ secrets.AUTH_STORAGE_TYPE || 'firestore' }}
+            ADMIN_PORT=${{ secrets.ADMIN_PORT || '3000' }}
+            ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
             GCS_BUCKET_NAME="${{ secrets.GCS_BUCKET_NAME }}"
             GOOGLE_SERVICE_ACCOUNT_EMAIL="${{ secrets.GOOGLE_SERVICE_ACCOUNT_EMAIL }}"
             GOOGLE_PRIVATE_KEY="${{ secrets.GOOGLE_PRIVATE_KEY }}"

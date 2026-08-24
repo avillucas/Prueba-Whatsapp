@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { DecisionNode, DecisionEngine, FlowProvider, JsonFlowAdapter } from 'motor-decision';
+import { FlowRepository } from '../domain/FlowRepository';
 
 export class SimpleFlowProvider implements FlowProvider {
   constructor(private nodes: DecisionNode[], private initialNodeId: string = 'MSG_INICIAL') {}
@@ -19,11 +20,21 @@ export class DecisionTreeManager {
   private initialNodeRegistry = new Map<string, string>();
   private defaultFlowId: string = 'flow_cfp412';
 
-  constructor(private flowsDir?: string) {
+  constructor(
+    private flowsDir?: string,
+    private flowRepository?: FlowRepository
+  ) {
     if (!this.flowsDir) {
       this.flowsDir = path.resolve(process.cwd(), 'flows');
     }
     this.loadFlowsFromDirectory();
+  }
+
+  /**
+   * Asigna o reemplaza el repositorio de flujos (ej. RedisFlowRepository).
+   */
+  public setFlowRepository(repository: FlowRepository): void {
+    this.flowRepository = repository;
   }
 
   /**
@@ -50,6 +61,44 @@ export class DecisionTreeManager {
   }
 
   /**
+   * Carga y sincroniza los flujos con Redis si el repositorio está activo.
+   * - Si un flujo local no existe en Redis, se guarda en Redis (sembrado / seed).
+   * - Si un flujo ya existe en Redis, prevalece la versión de Redis (ediciones previas del usuario).
+   */
+  public async loadFlows(dir?: string): Promise<void> {
+    this.loadFlowsFromDirectory(dir);
+
+    if (!this.flowRepository) {
+      return;
+    }
+
+    try {
+      const redisFlowIds = await this.flowRepository.listFlows();
+      const localFlowIds = Array.from(this.flowRegistry.keys());
+
+      // Seed: Para cada flujo local de disco que NO esté en Redis, se inicializa en Redis
+      for (const flowId of localFlowIds) {
+        if (!redisFlowIds.includes(flowId)) {
+          const nodes = this.flowRegistry.get(flowId);
+          if (nodes) {
+            await this.flowRepository.saveFlow(flowId, nodes);
+          }
+        }
+      }
+
+      // Cargar/sobrescribir en la memoria local todas las versiones guardadas en Redis
+      for (const flowId of redisFlowIds) {
+        const redisNodes = await this.flowRepository.getFlow(flowId);
+        if (redisNodes && Array.isArray(redisNodes) && redisNodes.length > 0) {
+          this.registerFlowNodes(flowId, redisNodes);
+        }
+      }
+    } catch (err: any) {
+      console.error(`⚠️ Aviso al sincronizar flujos con Redis: ${err.message}. Se conservan flujos locales.`);
+    }
+  }
+
+  /**
    * Registra un árbol de decisión manualmente a partir de un archivo JSON.
    */
   public registerFlowFromFile(flowId: string, filePath: string, initialNodeId: string = 'MSG_INICIAL'): void {
@@ -59,11 +108,34 @@ export class DecisionTreeManager {
   }
 
   /**
-   * Registra directamente un conjunto de nodos para un árbol de decisión.
+   * Registra directamente un conjunto de nodos para un árbol de decisión en memoria.
    */
   public registerFlowNodes(flowId: string, nodes: DecisionNode[], initialNodeId: string = 'MSG_INICIAL'): void {
     this.flowRegistry.set(flowId, nodes);
     this.initialNodeRegistry.set(flowId, initialNodeId);
+  }
+
+  /**
+   * Guarda o actualiza un flujo de decisión (Hot-Reload en memoria, actualización en Redis y archivo local).
+   */
+  public async saveFlow(flowId: string, nodes: DecisionNode[], initialNodeId: string = 'MSG_INICIAL'): Promise<void> {
+    this.registerFlowNodes(flowId, nodes, initialNodeId);
+
+    if (this.flowRepository) {
+      await this.flowRepository.saveFlow(flowId, nodes);
+    }
+
+    if (this.flowsDir) {
+      try {
+        if (!fs.existsSync(this.flowsDir)) {
+          fs.mkdirSync(this.flowsDir, { recursive: true });
+        }
+        const filePath = path.join(this.flowsDir, `${flowId}.json`);
+        fs.writeFileSync(filePath, JSON.stringify(nodes, null, 2), 'utf-8');
+      } catch (err: any) {
+        console.error(`⚠️ No se pudo guardar respaldo local en disco para '${flowId}': ${err.message}`);
+      }
+    }
   }
 
   /**

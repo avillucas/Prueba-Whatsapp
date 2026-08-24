@@ -7,6 +7,7 @@ import { LoggerFactory } from './infrastructure/adapters/logging/LoggerFactory';
 import { ErrorHandler } from './infrastructure/logging/ErrorHandler';
 import { AdminServer } from './infrastructure/web/AdminServer';
 import { DecisionTreeManager } from './application/DecisionTreeManager';
+import { RedisFlowRepository } from './infrastructure/repositories/RedisFlowRepository';
 import * as path from 'path';
 
 async function main() {
@@ -24,7 +25,16 @@ async function main() {
 
     console.log(`Cargando configuración... Interface: ${config.interface}, Entrada: ${config.inputAdapter}, Almacenamiento: ${config.leadsStorage.type}`);
 
-    const flowManager = new DecisionTreeManager(path.resolve(process.cwd(), 'flows'));
+    // Inicializar el repositorio de flujos en Redis
+    const redisFlowRepo = new RedisFlowRepository({
+        host: config.authStorage?.redis?.host,
+        port: config.authStorage?.redis?.port,
+        password: config.authStorage?.redis?.password
+    });
+
+    const flowManager = new DecisionTreeManager(path.resolve(process.cwd(), 'flows'), redisFlowRepo);
+    await flowManager.loadFlows();
+
     let flowProvider;
     if (config.inputAdapter === 'file') {
         try {
@@ -57,10 +67,10 @@ async function main() {
         const adapter = new ConsoleAdapter(flowProvider, leadRepo);
         adapter.start();
     } else if (config.interface === 'baileys') {
-        const adapter = new WhatsAppAdapter(flowProvider, leadRepo, authStorage);
+        const adapter = new WhatsAppAdapter(flowProvider, leadRepo, authStorage, flowManager, config.sessionConfig);
 
         if (config.adminWeb?.enabled !== false) {
-            const adminServer = new AdminServer(config, adapter);
+            const adminServer = new AdminServer(config, adapter, flowManager);
             await adminServer.start();
         }
 
