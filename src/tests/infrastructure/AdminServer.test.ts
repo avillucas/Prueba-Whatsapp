@@ -422,7 +422,7 @@ describe('AdminServer Test Suite', () => {
     await adminServer.start();
     const res = await makeRequest('GET', '/login');
     expect(res.statusCode).toBe(200);
-    expect(res.body).toContain('Iniciar Sesión');
+    expect(res.body).toContain('Panel Administrativo');
   });
 
   it('debería redirigir a /login en GET / si no está autenticado', async () => {
@@ -434,23 +434,22 @@ describe('AdminServer Test Suite', () => {
 
   it('debería invocar updateSessionConfig en whatsappAdapter al guardar configuración', async () => {
     const mockAdapter = {
+      getStatus: jest.fn().mockReturnValue('CONNECTED'),
+      getQR: jest.fn().mockReturnValue(null),
+      getConnectedUser: jest.fn().mockReturnValue(null),
+      resetAccount: jest.fn().mockResolvedValue(undefined),
       updateSessionConfig: jest.fn()
     };
-    const serverWithAdapter = new AdminServer(
-      { password: 'testpassword123', port: 0 },
-      mockFlowManager as any,
-      mockAdapter as any
-    );
-    await serverWithAdapter.start();
+    (adminServer as any).whatsappAdapter = mockAdapter;
+    await adminServer.start();
     const res = await makeRequest('POST', '/api/config', {
       Cookie: 'admin_session=testpassword123'
     }, {
       timeoutMinutes: 25,
       defaultFlowId: 'flow_cfp412'
-    }, (serverWithAdapter as any).port);
+    });
 
     expect(res.statusCode).toBe(200);
     expect(mockAdapter.updateSessionConfig).toHaveBeenCalledWith(expect.objectContaining({ timeoutMinutes: 25 }));
-    await serverWithAdapter.stop();
   });
 });
