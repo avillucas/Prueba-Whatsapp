@@ -73,4 +73,21 @@ describe("Config Loader", () => {
     expect(config.leadsStorage.googleSheets?.sheetContactoName).toBe('MisContactos');
     expect(config.leadsStorage.googleSheets?.sheetListaEsperaName).toBe('MiLista');
   });
+
+  it("Debería procesar variables de entorno para la sesión y el servidor administrativo", () => {
+    process.env.DEFAULT_FLOW_ID = 'flow_custom_env';
+    process.env.SESSION_TIMEOUT_MINUTES = '30';
+    process.env.ADMIN_PORT = '4000';
+    process.env.ADMIN_PASSWORD = 'envpassword';
+    process.env.REDIS_HOST = 'redis.local';
+    process.env.REDIS_PORT = '6380';
+
+    const config = loadConfig();
+    expect(config.sessionConfig?.defaultFlowId).toBe('flow_custom_env');
+    expect(config.sessionConfig?.timeoutMinutes).toBe(30);
+    expect(config.adminWeb?.port).toBe(4000);
+    expect(config.adminWeb?.password).toBe('envpassword');
+    expect(config.authStorage?.redis?.host).toBe('redis.local');
+    expect(config.authStorage?.redis?.port).toBe(6380);
+  });
 });

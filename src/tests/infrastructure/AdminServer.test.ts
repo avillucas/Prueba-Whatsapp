@@ -417,4 +417,40 @@ describe('AdminServer Test Suite', () => {
     expect(res.statusCode).toBe(401);
     expect(res.body).toContain('Contraseña incorrecta');
   });
+
+  it('debería renderizar la página de login en GET /login', async () => {
+    await adminServer.start();
+    const res = await makeRequest('GET', '/login');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain('Iniciar Sesión');
+  });
+
+  it('debería redirigir a /login en GET / si no está autenticado', async () => {
+    await adminServer.start();
+    const res = await makeRequest('GET', '/');
+    expect(res.statusCode).toBe(302);
+    expect(res.headers['location']).toBe('/login');
+  });
+
+  it('debería invocar updateSessionConfig en whatsappAdapter al guardar configuración', async () => {
+    const mockAdapter = {
+      updateSessionConfig: jest.fn()
+    };
+    const serverWithAdapter = new AdminServer(
+      { password: 'testpassword123', port: 0 },
+      mockFlowManager as any,
+      mockAdapter as any
+    );
+    await serverWithAdapter.start();
+    const res = await makeRequest('POST', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    }, {
+      timeoutMinutes: 25,
+      defaultFlowId: 'flow_cfp412'
+    }, (serverWithAdapter as any).port);
+
+    expect(res.statusCode).toBe(200);
+    expect(mockAdapter.updateSessionConfig).toHaveBeenCalledWith(expect.objectContaining({ timeoutMinutes: 25 }));
+    await serverWithAdapter.stop();
+  });
 });

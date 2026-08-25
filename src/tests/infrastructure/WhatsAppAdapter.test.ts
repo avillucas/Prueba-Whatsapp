@@ -339,4 +339,61 @@ describe("WhatsAppAdapter", () => {
     expect(mockAuthStorage.clearAuth).toHaveBeenCalled();
     expect(adapter.getStatus()).toBe('DISCONNECTED');
   });
+
+  it("Debería retornar el flujo id adecuado en getFlowIdForPhone bajo distintas configuraciones", () => {
+    const mockFlowMgr = {
+      getDefaultFlowId: jest.fn().mockReturnValue('flow_manager_default')
+    };
+
+    // 1. sessionConfig tiene defaultFlowId
+    const adapter1 = new WhatsAppAdapter(mockFlowProvider, mockRepo, undefined, mockFlowMgr as any, { defaultFlowId: 'flow_custom' });
+    expect(adapter1.getFlowIdForPhone('123')).toBe('flow_custom');
+
+    // 2. sessionConfig sin defaultFlowId pero con flowManager
+    const adapter2 = new WhatsAppAdapter(mockFlowProvider, mockRepo, undefined, mockFlowMgr as any, { defaultFlowId: '' });
+    expect(adapter2.getFlowIdForPhone('123')).toBe('flow_manager_default');
+
+    // 3. Ninguno definido -> fallback 'flow_cfp412'
+    const adapter3 = new WhatsAppAdapter(mockFlowProvider, mockRepo, undefined, undefined, { defaultFlowId: '' });
+    expect(adapter3.getFlowIdForPhone('123')).toBe('flow_cfp412');
+  });
+
+  it("Debería gestionar el inicio y detención del timer de inactividad", () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    adapter.stopTimeoutChecker();
+    expect((adapter as any).timeoutTimer).toBeNull();
+
+    adapter.startTimeoutChecker();
+    expect((adapter as any).timeoutTimer).not.toBeNull();
+
+    // Iniciar de nuevo no debe crear un segundo timer
+    const timerRef = (adapter as any).timeoutTimer;
+    adapter.startTimeoutChecker();
+    expect((adapter as any).timeoutTimer).toBe(timerRef);
+
+    adapter.stopTimeoutChecker();
+    expect((adapter as any).timeoutTimer).toBeNull();
+  });
+
+  it("Debería enviar un mensaje de inactividad si la conexión está abierta y expira la sesión", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    await adapter.start();
+
+    // Simular estado CONNECTED
+    eventListeners['connection.update']({ connection: 'open' });
+
+    (adapter as any).activeSessions.set('123456@s.whatsapp.net', {
+      sessionId: 'SESS_123',
+      engine: {} as any,
+      flowId: 'flow_cfp412',
+      lastActivityAt: Date.now() - 3600000 // 1 hora atras
+    });
+
+    await adapter.checkSessionTimeouts();
+
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(
+      '123456@s.whatsapp.net',
+      expect.objectContaining({ text: expect.stringContaining('cerrado automáticamente') })
+    );
+  });
 });
