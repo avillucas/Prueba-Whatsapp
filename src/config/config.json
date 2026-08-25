@@ -28,7 +28,7 @@
     "logDir": "./logs"
   },
   "sessionConfig": {
-    "timeoutMinutes": 15,
-    "defaultFlowId": "unregistered_flow"
+    "timeoutMinutes": 25,
+    "defaultFlowId": "flow_cfp412"
   }
 }
