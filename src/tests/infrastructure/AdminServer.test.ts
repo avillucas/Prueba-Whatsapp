@@ -13,7 +13,8 @@ describe('AdminServer Test Suite', () => {
       getStatus: jest.fn().mockReturnValue('WAITING_QR'),
       getQR: jest.fn().mockReturnValue('test-qr-code-data'),
       getConnectedUser: jest.fn().mockReturnValue(null),
-      resetAccount: jest.fn().mockResolvedValue(undefined)
+      resetAccount: jest.fn().mockResolvedValue(undefined),
+      updateSessionConfig: jest.fn()
     };
 
     mockConfig = {
@@ -105,7 +106,7 @@ describe('AdminServer Test Suite', () => {
       { 'Content-Type': 'application/x-www-form-urlencoded' },
       'password=wrongpassword'
     );
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(401);
     expect(res.body).toContain('Contraseña incorrecta');
   });
 
@@ -295,5 +296,57 @@ describe('AdminServer Test Suite', () => {
       Cookie: 'admin_session=testpassword123'
     }, { nodes: 'invalid' });
     expect(res.statusCode).toBe(400);
+  });
+
+  it('debería responder con la configuración en GET /api/config', async () => {
+    await adminServer.start();
+    const res = await makeRequest('GET', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    });
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.timeoutMinutes).toBeDefined();
+    expect(Array.isArray(data.availableFlows)).toBe(true);
+  });
+
+  it('debería actualizar la configuración exitosamente en POST /api/config', async () => {
+    await adminServer.start();
+    const res = await makeRequest('POST', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    }, {
+      timeoutMinutes: 20,
+      phoneFlowMap: { '54911000': 'flow_cfp412' }
+    });
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.success).toBe(true);
+  });
+
+  it('debería rechazar tiempo de inactividad inválido en POST /api/config', async () => {
+    await adminServer.start();
+    const res = await makeRequest('POST', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    }, {
+      timeoutMinutes: 0
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('debería permitir iniciar sesión con contraseña correcta en POST /login', async () => {
+    await adminServer.start();
+    const res = await makeRequest('POST', '/login', {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }, 'password=testpassword123');
+    expect(res.statusCode).toBe(302);
+    expect(res.headers['set-cookie']).toBeDefined();
+  });
+
+  it('debería rechazar inicio de sesión con contraseña incorrecta en POST /login', async () => {
+    await adminServer.start();
+    const res = await makeRequest('POST', '/login', {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }, 'password=wrongpass');
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toContain('Contraseña incorrecta');
   });
 });

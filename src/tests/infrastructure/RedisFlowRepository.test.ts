@@ -91,4 +91,34 @@ describe('RedisFlowRepository Test Suite', () => {
     const provider = manager.getFlowProvider('flow_cfp412');
     expect(provider.getFlow()[0].text).toBe('Texto editado en Redis');
   });
+
+  it('debería manejar errores en getFlow retornando null', async () => {
+    mockRedis.hget.mockRejectedValueOnce(new Error('Redis connection error'));
+    const result = await repository.getFlow('flow_error');
+    expect(result).toBeNull();
+  });
+
+  it('debería re-lanzar error en saveFlow si ocurre una excepción', async () => {
+    mockRedis.hset.mockRejectedValueOnce(new Error('Write error'));
+    await expect(repository.saveFlow('flow_fail', [])).rejects.toThrow('Write error');
+  });
+
+  it('debería retornar un arreglo vacío en listFlows si ocurre un error', async () => {
+    mockRedis.hkeys.mockRejectedValueOnce(new Error('List error'));
+    const flows = await repository.listFlows();
+    expect(flows).toEqual([]);
+  });
+
+  it('debería capturar errores sin lanzar excepción en deleteFlow', async () => {
+    mockRedis.hdel.mockRejectedValueOnce(new Error('Delete error'));
+    await expect(repository.deleteFlow('flow_fail')).resolves.toBeUndefined();
+  });
+
+  it('debería desconectar la instancia interna de Redis al llamar a disconnect()', async () => {
+    const localRepo = new RedisFlowRepository({ host: 'localhost', port: 6379 });
+    const localRedisMock = (localRepo as any).redis;
+    localRedisMock.quit = jest.fn().mockResolvedValue(undefined);
+    await localRepo.disconnect();
+    expect(localRedisMock.quit).toHaveBeenCalled();
+  });
 });

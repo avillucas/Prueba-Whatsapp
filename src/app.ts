@@ -35,26 +35,29 @@ async function main() {
     const flowManager = new DecisionTreeManager(path.resolve(process.cwd(), 'flows'), redisFlowRepo);
     await flowManager.loadFlows();
 
+    const defaultFlowId = config.sessionConfig?.defaultFlowId || 'flow_cfp412';
+    try {
+        flowManager.setDefaultFlowId(defaultFlowId);
+    } catch (_err) {
+        // En caso de que no estuviese registrado aún
+    }
+
     let flowProvider;
-    if (config.inputAdapter === 'file') {
+    try {
+        flowProvider = flowManager.getFlowProvider(defaultFlowId);
+        console.log(`Gestor de árboles de decisión cargó el flujo por defecto: '${defaultFlowId}'`);
+    } catch (_e) {
         try {
-            const flowId = path.basename(config.flowFile, '.json');
-            flowProvider = flowManager.getFlowProvider(flowId);
-            console.log(`Gestor de árboles de decisión cargó el flujo: '${flowId}'`);
-        } catch (_e) {
-            try {
-                const flowPath = path.resolve(process.cwd(), 'flows', config.flowFile);
-                flowManager.registerFlowFromFile('default', flowPath);
-                flowProvider = flowManager.getFlowProvider('default');
-                console.log(`Flujo cargado desde ${flowPath}`);
-            } catch (err: any) {
-                console.error(`Error crítico al cargar el flujo: ${err.message}. Abortando.`);
-                process.exit(1);
-            }
+            const flowFileName = `${defaultFlowId}.json`;
+            const flowPath = path.resolve(process.cwd(), 'flows', flowFileName);
+            flowManager.registerFlowFromFile(defaultFlowId, flowPath);
+            flowManager.setDefaultFlowId(defaultFlowId);
+            flowProvider = flowManager.getFlowProvider(defaultFlowId);
+            console.log(`Flujo cargado desde ${flowPath}`);
+        } catch (err: any) {
+            console.error(`Error crítico al cargar el flujo por defecto '${defaultFlowId}': ${err.message}. Abortando.`);
+            process.exit(1);
         }
-    } else {
-        console.error(`Adaptador de entrada '${config.inputAdapter}' no soportado aún.`);
-        process.exit(1);
     }
 
     // Instancia el LeadRepository usando el patrón Factory (por defecto 'csv', o 'google_sheets' / 'googlesheet')

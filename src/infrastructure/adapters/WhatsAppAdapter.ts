@@ -136,6 +136,7 @@ export class WhatsAppAdapter {
     }
 
     if (map['default']) return map['default'];
+    if (this.sessionConfig?.defaultFlowId) return this.sessionConfig.defaultFlowId;
     if (this.flowManager) return this.flowManager.getDefaultFlowId();
     return 'flow_cfp412';
   }

@@ -1,7 +1,6 @@
 {
   "interface": "command",
   "inputAdapter": "file",
-  "flowFile": "flow_cfp412.json",
   "leadsStorage": {
     "type": "csv",
     "filePath": "data",
@@ -29,7 +28,10 @@
     "logDir": "./logs"
   },
   "sessionConfig": {
-    "timeoutMinutes": 15,
-    "phoneFlowMap": {}
+    "timeoutMinutes": 20,
+    "defaultFlowId": "flow_cfp412",
+    "phoneFlowMap": {
+      "54911000": "flow_cfp412"
+    }
   }
 }

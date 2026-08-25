@@ -43,13 +43,14 @@ export interface AdminWebConfig {
 
 export interface SessionConfig {
     timeoutMinutes?: number;
+    defaultFlowId?: string;
     phoneFlowMap?: Record<string, string>;
 }
 
 export interface AppConfig {
     interface: 'command' | 'baileys';
-    inputAdapter: 'file';
-    flowFile: string;
+    inputAdapter?: 'file' | string;
+    flowFile?: string;
     leadsStorage: {
         type: 'csv' | 'google_sheets' | 'googlesheet' | 'composite';
         filePath?: string;
@@ -231,8 +232,17 @@ export function loadConfig(): AppConfig {
     if (!config.sessionConfig) {
         config.sessionConfig = {
             timeoutMinutes: 15,
+            defaultFlowId: 'flow_cfp412',
             phoneFlowMap: {}
         };
+    }
+
+    if (!config.sessionConfig.defaultFlowId) {
+        config.sessionConfig.defaultFlowId = process.env.DEFAULT_FLOW_ID || (config.flowFile ? path.basename(config.flowFile, '.json') : 'flow_cfp412');
+    }
+
+    if (process.env.DEFAULT_FLOW_ID) {
+        config.sessionConfig.defaultFlowId = process.env.DEFAULT_FLOW_ID;
     }
 
     if (process.env.SESSION_TIMEOUT_MINUTES) {

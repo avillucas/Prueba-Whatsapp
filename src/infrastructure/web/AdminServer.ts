@@ -88,7 +88,7 @@ export class AdminServer {
         res.setHeader('Set-Cookie', `admin_session=${encodeURIComponent(password)}; Path=/; HttpOnly; SameSite=Strict`);
         res.redirect('/');
       } else {
-        res.send(this.renderLoginPage('Contraseña incorrecta. Por favor reintente.'));
+        res.status(401).send(this.renderLoginPage('Contraseña incorrecta. Por favor reintente.'));
       }
     });
 
@@ -195,10 +195,12 @@ export class AdminServer {
     // API: Obtener configuración de sesiones y ruteo de flujos
     this.app.get('/api/config', this.authMiddleware, (_req: Request, res: Response) => {
       try {
-        const sessionConfig = this.config.sessionConfig || { timeoutMinutes: 15, phoneFlowMap: {} };
+        const sessionConfig = this.config.sessionConfig || { timeoutMinutes: 15, defaultFlowId: 'flow_cfp412', phoneFlowMap: {} };
         const availableFlows = this.flowManager.getAvailableFlows();
+        const defaultFlowId = sessionConfig.defaultFlowId || this.flowManager.getDefaultFlowId() || 'flow_cfp412';
         res.json({
           timeoutMinutes: sessionConfig.timeoutMinutes || 15,
+          defaultFlowId,
           phoneFlowMap: sessionConfig.phoneFlowMap || {},
           availableFlows
         });
@@ -211,7 +213,7 @@ export class AdminServer {
     // API: Guardar configuración de sesiones y ruteo de flujos
     this.app.post('/api/config', this.authMiddleware, (req: Request, res: Response) => {
       try {
-        const { timeoutMinutes, phoneFlowMap } = req.body;
+        const { timeoutMinutes, defaultFlowId, phoneFlowMap } = req.body;
 
         const parsedTimeout = Number(timeoutMinutes);
         if (isNaN(parsedTimeout) || parsedTimeout <= 0) {
@@ -224,12 +226,22 @@ export class AdminServer {
           return;
         }
 
+        const targetDefaultFlow = defaultFlowId ? String(defaultFlowId).trim() : (this.config.sessionConfig?.defaultFlowId || 'flow_cfp412');
+        if (targetDefaultFlow && this.flowManager) {
+          try {
+            this.flowManager.setDefaultFlowId(targetDefaultFlow);
+          } catch (_e) {
+            // Ignorar si aún no existe en el registro
+          }
+        }
+
         this.config.sessionConfig = {
           timeoutMinutes: parsedTimeout,
+          defaultFlowId: targetDefaultFlow,
           phoneFlowMap: phoneFlowMap || {}
         };
 
-        if (this.whatsappAdapter) {
+        if (this.whatsappAdapter && typeof this.whatsappAdapter.updateSessionConfig === 'function') {
           this.whatsappAdapter.updateSessionConfig(this.config.sessionConfig);
         }
 
@@ -836,6 +848,19 @@ export class AdminServer {
           </label>
           <input type="number" id="cfgTimeoutInput" class="input-field" min="1" max="1440" value="15" style="width: 100%; padding: 0.6rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; color: #f8fafc;" />
         </div>
+      <div class="card" style="margin-bottom: 1.5rem;">
+        <div class="card-title">🌳 Árbol de Decisión Por Defecto (Charlas General)</div>
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Selecciona el flujo de conversación que se utilizará de forma predeterminada en las charlas cuando no haya un mapeo por teléfono.
+        </p>
+
+        <div style="max-width: 350px;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+            Árbol de Decisión Inicial
+          </label>
+          <select id="cfgDefaultFlowSelect" class="select-flow" style="width: 100%; padding: 0.6rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; color: #f8fafc;">
+          </select>
+        </div>
       </div>
 
       <div class="card">
@@ -1272,6 +1297,14 @@ export class AdminServer {
         document.getElementById('cfgTimeoutInput').value = data.timeoutMinutes || 15;
         availableFlowsCache = data.availableFlows || [];
 
+        var defaultSelect = document.getElementById('cfgDefaultFlowSelect');
+        if (defaultSelect) {
+          defaultSelect.innerHTML = availableFlowsCache.map(function(f) {
+            var sel = f === (data.defaultFlowId || 'flow_cfp412') ? 'selected' : '';
+            return '<option value="' + f + '" ' + sel + '>' + f + '</option>';
+          }).join('');
+        }
+
         var container = document.getElementById('phoneMappingsContainer');
         container.innerHTML = '';
 
@@ -1329,6 +1362,8 @@ export class AdminServer {
         return;
       }
 
+      var defaultFlowId = document.getElementById('cfgDefaultFlowSelect').value;
+
       var phoneFlowMap = {};
       var rows = document.querySelectorAll('.phone-mapping-row');
       rows.forEach(function(row) {
@@ -1345,6 +1380,7 @@ export class AdminServer {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             timeoutMinutes: timeoutMinutes,
+            defaultFlowId: defaultFlowId,
             phoneFlowMap: phoneFlowMap
           })
         });
