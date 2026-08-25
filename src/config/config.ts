@@ -103,6 +103,10 @@ export function loadConfig(): AppConfig {
 
     if (process.env.FLOW_FILE) {
         config.flowFile = process.env.FLOW_FILE;
+        if (!config.sessionConfig) {
+            config.sessionConfig = {};
+        }
+        config.sessionConfig.defaultFlowId = path.basename(process.env.FLOW_FILE, '.json');
     }
 
     if (process.env.LEADS_STORAGE_TYPE) {

@@ -19,7 +19,7 @@ describe("Config Loader", () => {
     
     const config = loadConfig();
     expect(config.interface).toBeDefined();
-    expect(config.flowFile).toBeDefined();
+    expect(config.sessionConfig?.defaultFlowId).toBeDefined();
     expect(config.leadsStorage.type).toBe('csv');
   });
 
@@ -30,7 +30,7 @@ describe("Config Loader", () => {
 
     const config = loadConfig();
     expect(config.interface).toBe('baileys');
-    expect(config.flowFile).toBe('flow_test.json');
+    expect(config.sessionConfig?.defaultFlowId).toBe('flow_test');
     expect(config.leadsStorage.type).toBe('csv');
   });
 
