@@ -279,6 +279,25 @@ describe('AdminServer Test Suite', () => {
     expect(Array.isArray(data.nodes)).toBe(true);
   });
 
+  it('debería retornar 404 si el flujo no existe en GET /api/flows/:id', async () => {
+    await adminServer.start();
+    const res = await makeRequest('GET', '/api/flows/non_existent_flow', {
+      Cookie: 'admin_session=testpassword123'
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('debería retornar 500 si ocurre un error al listar flujos en GET /api/flows', async () => {
+    (adminServer as any).flowManager = {
+      getAvailableFlows: () => { throw new Error('Error simulado'); }
+    };
+    await adminServer.start();
+    const res = await makeRequest('GET', '/api/flows', {
+      Cookie: 'admin_session=testpassword123'
+    });
+    expect(res.statusCode).toBe(500);
+  });
+
   it('debería guardar un flujo en POST /api/flows/:id', async () => {
     await adminServer.start();
     const testNodes = [{ id: 'TEST', text: 'Hola', options: [] }];
@@ -298,6 +317,28 @@ describe('AdminServer Test Suite', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  it('debería retornar 500 si falla saveFlow en POST /api/flows/:id', async () => {
+    (adminServer as any).flowManager = {
+      saveFlow: jest.fn().mockRejectedValue(new Error('Error de guardado'))
+    };
+    await adminServer.start();
+    const res = await makeRequest('POST', '/api/flows/flow_err', {
+      Cookie: 'admin_session=testpassword123'
+    }, { nodes: [] });
+    expect(res.statusCode).toBe(500);
+  });
+
+  it('debería retornar 500 si ocurre un error en GET /api/config', async () => {
+    (adminServer as any).flowManager = {
+      getAvailableFlows: () => { throw new Error('Error simulado'); }
+    };
+    await adminServer.start();
+    const res = await makeRequest('GET', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    });
+    expect(res.statusCode).toBe(500);
+  });
+
   it('debería responder con la configuración en GET /api/config', async () => {
     await adminServer.start();
     const res = await makeRequest('GET', '/api/config', {
@@ -315,7 +356,7 @@ describe('AdminServer Test Suite', () => {
       Cookie: 'admin_session=testpassword123'
     }, {
       timeoutMinutes: 20,
-      phoneFlowMap: { '54911000': 'flow_cfp412' }
+      defaultFlowId: 'flow_cfp412'
     });
     expect(res.statusCode).toBe(200);
     const data = JSON.parse(res.body);
@@ -330,6 +371,33 @@ describe('AdminServer Test Suite', () => {
       timeoutMinutes: 0
     });
     expect(res.statusCode).toBe(400);
+  });
+
+  it('debería ignorar errores en setDefaultFlowId si el flujo no existe aún al actualizar configuración', async () => {
+    (adminServer as any).flowManager = {
+      setDefaultFlowId: () => { throw new Error('Flujo no encontrado'); }
+    };
+    await adminServer.start();
+    const res = await makeRequest('POST', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    }, {
+      timeoutMinutes: 15,
+      defaultFlowId: 'unregistered_flow'
+    });
+    expect(res.statusCode).toBe(200);
+  });
+
+  it('debería retornar 500 si ocurre una excepción inesperada en POST /api/config', async () => {
+    Object.defineProperty(adminServer as any, 'config', {
+      get: () => { throw new Error('Error catastrófico de config'); }
+    });
+    await adminServer.start();
+    const res = await makeRequest('POST', '/api/config', {
+      Cookie: 'admin_session=testpassword123'
+    }, {
+      timeoutMinutes: 15
+    });
+    expect(res.statusCode).toBe(500);
   });
 
   it('debería permitir iniciar sesión con contraseña correcta en POST /login', async () => {

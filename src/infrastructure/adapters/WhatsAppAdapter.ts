@@ -51,7 +51,7 @@ export class WhatsAppAdapter {
     this.flowProvider = flowProvider;
     this.authStorage = authStorage || AuthStorageFactory.create();
     this.flowManager = flowManager;
-    this.sessionConfig = sessionConfig || { timeoutMinutes: 15, phoneFlowMap: {} };
+    this.sessionConfig = sessionConfig || { timeoutMinutes: 15, defaultFlowId: 'flow_cfp412' };
 
     this.startTimeoutChecker();
   }
@@ -121,21 +121,7 @@ export class WhatsAppAdapter {
     }
   }
 
-  public getFlowIdForPhone(remoteJid: string): string {
-    const rawPhone = remoteJid.replace(/@.*$/, '');
-    const map = this.sessionConfig?.phoneFlowMap || {};
-
-    if (map[rawPhone]) return map[rawPhone];
-    if (map[remoteJid]) return map[remoteJid];
-
-    for (const key of Object.keys(map)) {
-      const cleanKey = key.replace(/[^0-9]/g, '');
-      if (cleanKey && rawPhone.startsWith(cleanKey)) {
-        return map[key];
-      }
-    }
-
-    if (map['default']) return map['default'];
+  public getFlowIdForPhone(_remoteJid: string): string {
     if (this.sessionConfig?.defaultFlowId) return this.sessionConfig.defaultFlowId;
     if (this.flowManager) return this.flowManager.getDefaultFlowId();
     return 'flow_cfp412';

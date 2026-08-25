@@ -29,9 +29,6 @@
   },
   "sessionConfig": {
     "timeoutMinutes": 20,
-    "defaultFlowId": "flow_cfp412",
-    "phoneFlowMap": {
-      "54911000": "flow_cfp412"
-    }
+    "defaultFlowId": "flow_cfp412"
   }
 }

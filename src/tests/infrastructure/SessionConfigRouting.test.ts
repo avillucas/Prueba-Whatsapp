@@ -2,7 +2,13 @@ import { WhatsAppAdapter } from '../../infrastructure/adapters/WhatsAppAdapter';
 import { SimpleFlowProvider } from '../../application/DecisionTreeManager';
 import { DecisionNode } from 'motor-decision';
 
-describe('Session Timeout and Phone Flow Routing Test Suite', () => {
+jest.mock('@whiskeysockets/baileys', () => ({
+  makeWASocket: jest.fn(() => ({ ev: { on: jest.fn() } })),
+  useMultiFileAuthState: jest.fn().mockResolvedValue({ state: {}, saveCreds: jest.fn() }),
+  DisconnectReason: { loggedOut: 401 }
+}));
+
+describe('Session Timeout and Default Flow Routing Test Suite', () => {
   let mockLeadRepo: any;
   let mockFlowProvider: SimpleFlowProvider;
   let adapter: WhatsAppAdapter;
@@ -25,11 +31,7 @@ describe('Session Timeout and Phone Flow Routing Test Suite', () => {
       undefined,
       {
         timeoutMinutes: 15,
-        phoneFlowMap: {
-          '5491122334455': 'flow_vip',
-          '54911': 'flow_bsas',
-          'default': 'flow_cfp412'
-        }
+        defaultFlowId: 'flow_cfp412'
       }
     );
     adapter.stopTimeoutChecker();
@@ -39,19 +41,9 @@ describe('Session Timeout and Phone Flow Routing Test Suite', () => {
     adapter.stopTimeoutChecker();
   });
 
-  describe('Ruteo de Flujos por Número de Teléfono (getFlowIdForPhone)', () => {
-    it('debería mapear correctamente un número con coincidencia exacta', () => {
+  describe('Obtención de Flujo por Defecto (getFlowIdForPhone)', () => {
+    it('debería retornar el flujo por defecto configurado', () => {
       const flowId = adapter.getFlowIdForPhone('5491122334455@s.whatsapp.net');
-      expect(flowId).toBe('flow_vip');
-    });
-
-    it('debería mapear por prefijo de número si no hay coincidencia exacta', () => {
-      const flowId = adapter.getFlowIdForPhone('5491199887766@s.whatsapp.net');
-      expect(flowId).toBe('flow_bsas');
-    });
-
-    it('debería retornar la regla default o fallback si el número no coincide con ningún mapeo específico', () => {
-      const flowId = adapter.getFlowIdForPhone('15551234567@s.whatsapp.net');
       expect(flowId).toBe('flow_cfp412');
     });
   });
@@ -60,7 +52,7 @@ describe('Session Timeout and Phone Flow Routing Test Suite', () => {
     it('debería permitir actualizar la configuración de sesiones dinámicamente', () => {
       adapter.updateSessionConfig({
         timeoutMinutes: 5,
-        phoneFlowMap: { '5491122334455': 'flow_custom' }
+        defaultFlowId: 'flow_custom'
       });
 
       const config = adapter.getSessionConfig();
@@ -71,7 +63,6 @@ describe('Session Timeout and Phone Flow Routing Test Suite', () => {
     it('debería cerrar la sesión si transcurrió más tiempo del límite de inactividad', async () => {
       adapter.updateSessionConfig({ timeoutMinutes: 1 }); // 1 minuto timeout
 
-      // Acceder a la colección privada de sesiones para simular una sesión antigua
       const activeSessionsMap = (adapter as any).activeSessions;
       activeSessionsMap.set('5491100000000@s.whatsapp.net', {
         sessionId: 'TEST_SESSION_123',

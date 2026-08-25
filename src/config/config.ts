@@ -44,7 +44,6 @@ export interface AdminWebConfig {
 export interface SessionConfig {
     timeoutMinutes?: number;
     defaultFlowId?: string;
-    phoneFlowMap?: Record<string, string>;
 }
 
 export interface AppConfig {
@@ -236,8 +235,7 @@ export function loadConfig(): AppConfig {
     if (!config.sessionConfig) {
         config.sessionConfig = {
             timeoutMinutes: 15,
-            defaultFlowId: 'flow_cfp412',
-            phoneFlowMap: {}
+            defaultFlowId: 'flow_cfp412'
         };
     }
 

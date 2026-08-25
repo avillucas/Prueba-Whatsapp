@@ -192,16 +192,15 @@ export class AdminServer {
       }
     });
 
-    // API: Obtener configuración de sesiones y ruteo de flujos
+    // API: Obtener configuración de sesiones y flujo por defecto
     this.app.get('/api/config', this.authMiddleware, (_req: Request, res: Response) => {
       try {
-        const sessionConfig = this.config.sessionConfig || { timeoutMinutes: 15, defaultFlowId: 'flow_cfp412', phoneFlowMap: {} };
+        const sessionConfig = this.config.sessionConfig || { timeoutMinutes: 15, defaultFlowId: 'flow_cfp412' };
         const availableFlows = this.flowManager.getAvailableFlows();
         const defaultFlowId = sessionConfig.defaultFlowId || this.flowManager.getDefaultFlowId() || 'flow_cfp412';
         res.json({
           timeoutMinutes: sessionConfig.timeoutMinutes || 15,
           defaultFlowId,
-          phoneFlowMap: sessionConfig.phoneFlowMap || {},
           availableFlows
         });
       } catch (err: any) {
@@ -210,19 +209,14 @@ export class AdminServer {
       }
     });
 
-    // API: Guardar configuración de sesiones y ruteo de flujos
+    // API: Guardar configuración de sesiones y flujo por defecto
     this.app.post('/api/config', this.authMiddleware, (req: Request, res: Response) => {
       try {
-        const { timeoutMinutes, defaultFlowId, phoneFlowMap } = req.body;
+        const { timeoutMinutes, defaultFlowId } = req.body;
 
         const parsedTimeout = Number(timeoutMinutes);
         if (isNaN(parsedTimeout) || parsedTimeout <= 0) {
           res.status(400).json({ error: 'El tiempo de espera debe ser un número mayor a 0.' });
-          return;
-        }
-
-        if (phoneFlowMap && typeof phoneFlowMap !== 'object') {
-          res.status(400).json({ error: 'El mapeo de teléfonos debe ser un objeto válido.' });
           return;
         }
 
@@ -237,8 +231,7 @@ export class AdminServer {
 
         this.config.sessionConfig = {
           timeoutMinutes: parsedTimeout,
-          defaultFlowId: targetDefaultFlow,
-          phoneFlowMap: phoneFlowMap || {}
+          defaultFlowId: targetDefaultFlow
         };
 
         if (this.whatsappAdapter && typeof this.whatsappAdapter.updateSessionConfig === 'function') {
@@ -257,7 +250,7 @@ export class AdminServer {
           }
         }
 
-        ErrorHandler.logSystem('AdminServer', 'Configuración de sesión y ruteo de flujos actualizada desde la web.');
+        ErrorHandler.logSystem('AdminServer', 'Configuración de sesión y flujo por defecto actualizada desde la web.');
         res.json({ success: true, message: 'Configuración actualizada correctamente.' });
       } catch (err: any) {
         res.status(500).json({ error: `Error al guardar la configuración: ${err.message}` });
@@ -834,7 +827,7 @@ export class AdminServer {
       </div>
     </div>
 
-    <!-- Pestaña 3: Configuración de Sesiones y Ruteo por Teléfono -->
+    <!-- Pestaña 3: Configuración de Sesiones -->
     <div id="tabConfig" class="tab-content">
       <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-title">⏳ Tiempo de Espera por Inactividad</div>
@@ -848,35 +841,23 @@ export class AdminServer {
           </label>
           <input type="number" id="cfgTimeoutInput" class="input-field" min="1" max="1440" value="15" style="width: 100%; padding: 0.6rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; color: #f8fafc;" />
         </div>
+      </div>
+
       <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-title">🌳 Árbol de Decisión Por Defecto (Charlas General)</div>
         <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem;">
-          Selecciona el flujo de conversación que se utilizará de forma predeterminada en las charlas cuando no haya un mapeo por teléfono.
+          Selecciona el flujo de conversación que se utilizará de forma predeterminada en las charlas.
         </p>
 
-        <div style="max-width: 350px;">
+        <div style="max-width: 350px; margin-bottom: 1.5rem;">
           <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
             Árbol de Decisión Inicial
           </label>
           <select id="cfgDefaultFlowSelect" class="select-flow" style="width: 100%; padding: 0.6rem; background: #0f172a; border: 1px solid #334155; border-radius: 0.375rem; color: #f8fafc;">
           </select>
         </div>
-      </div>
 
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-          <div>
-            <div class="card-title" style="margin-bottom: 0.25rem;">📱 Ruteo de Árboles de Decisión por Número</div>
-            <p style="font-size: 0.875rem; color: var(--text-muted); margin: 0;">
-              Asigna qué árbol de decisión se enviará automáticamente según el número de teléfono emisor (o prefijo).
-            </p>
-          </div>
-          <button class="btn-action btn-primary" onclick="addPhoneMappingRow()">➕ Añadir Regla</button>
-        </div>
-
-        <div id="phoneMappingsContainer" style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;"></div>
-
-        <div style="text-align: right; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #334155;">
+        <div style="text-align: right; padding-top: 1rem; border-top: 1px solid #334155;">
           <button class="btn-action btn-success" style="background: #16a34a; font-size: 1rem; padding: 0.65rem 1.5rem;" onclick="saveSessionConfig()">
             💾 Guardar Configuración
           </button>
@@ -1287,7 +1268,7 @@ export class AdminServer {
       loadFlowList();
     }
 
-    // --- Configuración de Sesiones y Ruteo ---
+    // --- Configuración de Sesiones ---
     async function loadConfigSettings() {
       try {
         var res = await fetch('/api/config');
@@ -1304,55 +1285,9 @@ export class AdminServer {
             return '<option value="' + f + '" ' + sel + '>' + f + '</option>';
           }).join('');
         }
-
-        var container = document.getElementById('phoneMappingsContainer');
-        container.innerHTML = '';
-
-        var phoneMap = data.phoneFlowMap || {};
-        var keys = Object.keys(phoneMap);
-
-        if (keys.length === 0) {
-          container.innerHTML = '<div style="font-size: 0.875rem; color: var(--text-muted); font-style: italic;">No hay reglas por número configuradas (se usará el flujo por defecto).</div>';
-        } else {
-          keys.forEach(function(phone) {
-            addPhoneMappingRow(phone, phoneMap[phone]);
-          });
-        }
       } catch (err) {
         console.error('Error al cargar configuración:', err);
       }
-    }
-
-    function addPhoneMappingRow(phone, flowId) {
-      var container = document.getElementById('phoneMappingsContainer');
-      if (container.children.length === 1 && container.children[0].tagName === 'DIV' && container.children[0].innerText.includes('No hay reglas')) {
-        container.innerHTML = '';
-      }
-
-      var row = document.createElement('div');
-      row.className = 'phone-mapping-row';
-      row.style.cssText = 'display: flex; gap: 0.75rem; align-items: center; background: #0f172a; padding: 0.75rem; border: 1px solid #334155; border-radius: 0.375rem;';
-
-      var phoneVal = phone || '';
-      var flowVal = flowId || (availableFlowsCache[0] || 'flow_cfp412');
-
-      var selectOptionsHtml = availableFlowsCache.map(function(f) {
-        var sel = f === flowVal ? 'selected' : '';
-        return '<option value="' + f + '" ' + sel + '>' + f + '</option>';
-      }).join('');
-
-      row.innerHTML = 
-        '<div style="flex: 1;">' +
-          '<input type="text" class="phone-input input-field" placeholder="Ej: 5491122334455 o default" value="' + phoneVal + '" style="width: 100%; padding: 0.5rem; background: #1e293b; border: 1px solid #475569; border-radius: 0.25rem; color: #f8fafc;" />' +
-        '</div>' +
-        '<div style="flex: 1;">' +
-          '<select class="flow-select select-flow" style="width: 100%; padding: 0.5rem; background: #1e293b; border: 1px solid #475569; border-radius: 0.25rem; color: #f8fafc;">' +
-            selectOptionsHtml +
-          '</select>' +
-        '</div>' +
-        '<button class="btn-action btn-danger" style="padding: 0.5rem 0.75rem;" onclick="this.parentElement.remove()">🗑️</button>';
-
-      container.appendChild(row);
     }
 
     async function saveSessionConfig() {
@@ -1364,24 +1299,13 @@ export class AdminServer {
 
       var defaultFlowId = document.getElementById('cfgDefaultFlowSelect').value;
 
-      var phoneFlowMap = {};
-      var rows = document.querySelectorAll('.phone-mapping-row');
-      rows.forEach(function(row) {
-        var phone = row.querySelector('.phone-input').value.trim();
-        var flow = row.querySelector('.flow-select').value;
-        if (phone) {
-          phoneFlowMap[phone] = flow;
-        }
-      });
-
       try {
         var res = await fetch('/api/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             timeoutMinutes: timeoutMinutes,
-            defaultFlowId: defaultFlowId,
-            phoneFlowMap: phoneFlowMap
+            defaultFlowId: defaultFlowId
           })
         });
         var result = await res.json();
