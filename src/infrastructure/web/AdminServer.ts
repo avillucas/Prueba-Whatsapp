@@ -35,7 +35,7 @@ export class AdminServer {
 
     if (!cookieHeader) return list;
 
-    cookieHeader.split(';').forEach((cookie) => {
+    cookieHeader.split(';').forEach((cookie: string) => {
       const parts = cookie.split('=');
       const name = parts.shift()?.trim();
       const value = decodeURIComponent(parts.join('='));
@@ -192,14 +192,62 @@ export class AdminServer {
       }
     });
 
+    // API: Listar sesiones activas y su estado de Modo Asesor
+    this.app.get('/api/sessions', this.authMiddleware, (_req: Request, res: Response) => {
+      try {
+        const sessionsMap = this.whatsappAdapter.getActiveSessionsMap();
+        const sessions = Array.from(sessionsMap.entries()).map(([remoteJid, session]) => ({
+          remoteJid,
+          sessionId: session.sessionId,
+          flowId: session.flowId,
+          lastActivityAt: session.lastActivityAt,
+          isHumanMode: Boolean(session.isHumanMode),
+          humanModeStartedAt: session.humanModeStartedAt || null
+        }));
+        res.json({ sessions });
+      } catch (err: any) {
+        ErrorHandler.logSystem('AdminServer', `Error al listar sesiones: ${err.message}`);
+        res.status(500).json({ error: 'Error al obtener lista de sesiones' });
+      }
+    });
+
+    // API: Alternar Modo Asesor para una sesión específica
+    this.app.post('/api/sessions/:jid/toggle-human', this.authMiddleware, (req: Request, res: Response) => {
+      try {
+        const remoteJid = decodeURIComponent(req.params.jid);
+        const { isHumanMode } = req.body;
+        
+        const sessionsMap = this.whatsappAdapter.getActiveSessionsMap();
+        const session = sessionsMap.get(remoteJid);
+        if (!session) {
+          res.status(404).json({ error: 'Sesión activa no encontrada para el JID especificado.' });
+          return;
+        }
+
+        const newHumanMode = typeof isHumanMode === 'boolean' ? isHumanMode : !session.isHumanMode;
+        this.whatsappAdapter.setHumanMode(remoteJid, newHumanMode);
+
+        ErrorHandler.logSystem('AdminServer', `Modo Asesor para ${remoteJid} actualizado a ${newHumanMode} desde el panel web.`);
+        res.json({
+          success: true,
+          remoteJid,
+          isHumanMode: newHumanMode,
+          message: `Modo Asesor ${newHumanMode ? 'activado (automatización pausada)' : 'desactivado (bot reanudado)'} para ${remoteJid}.`
+        });
+      } catch (err: any) {
+        res.status(500).json({ error: `Error al cambiar Modo Asesor: ${err.message}` });
+      }
+    });
+
     // API: Obtener configuración de sesiones y flujo por defecto
     this.app.get('/api/config', this.authMiddleware, (_req: Request, res: Response) => {
       try {
-        const sessionConfig = this.config.sessionConfig || { timeoutMinutes: 15, defaultFlowId: 'flow_cfp412' };
+        const sessionConfig = this.config.sessionConfig || { timeoutMinutes: 15, defaultFlowId: 'flow_cfp412', humanModeTimeoutMinutes: 30 };
         const availableFlows = this.flowManager.getAvailableFlows();
         const defaultFlowId = sessionConfig.defaultFlowId || this.flowManager.getDefaultFlowId() || 'flow_cfp412';
         res.json({
           timeoutMinutes: sessionConfig.timeoutMinutes || 15,
+          humanModeTimeoutMinutes: sessionConfig.humanModeTimeoutMinutes || 30,
           defaultFlowId,
           availableFlows
         });
@@ -212,13 +260,15 @@ export class AdminServer {
     // API: Guardar configuración de sesiones y flujo por defecto
     this.app.post('/api/config', this.authMiddleware, (req: Request, res: Response) => {
       try {
-        const { timeoutMinutes, defaultFlowId } = req.body;
+        const { timeoutMinutes, humanModeTimeoutMinutes, defaultFlowId } = req.body;
 
         const parsedTimeout = Number(timeoutMinutes);
         if (isNaN(parsedTimeout) || parsedTimeout <= 0) {
           res.status(400).json({ error: 'El tiempo de espera debe ser un número mayor a 0.' });
           return;
         }
+
+        const parsedHumanTimeout = Number(humanModeTimeoutMinutes) || 30;
 
         const targetDefaultFlow = defaultFlowId ? String(defaultFlowId).trim() : (this.config.sessionConfig?.defaultFlowId || 'flow_cfp412');
         if (targetDefaultFlow && this.flowManager) {
@@ -231,6 +281,7 @@ export class AdminServer {
 
         this.config.sessionConfig = {
           timeoutMinutes: parsedTimeout,
+          humanModeTimeoutMinutes: parsedHumanTimeout,
           defaultFlowId: targetDefaultFlow
         };
 

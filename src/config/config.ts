@@ -44,6 +44,7 @@ export interface AdminWebConfig {
 export interface SessionConfig {
     timeoutMinutes?: number;
     defaultFlowId?: string;
+    humanModeTimeoutMinutes?: number;
 }
 
 export interface AppConfig {
@@ -249,6 +250,12 @@ export function loadConfig(): AppConfig {
 
     if (process.env.SESSION_TIMEOUT_MINUTES) {
         config.sessionConfig.timeoutMinutes = Number(process.env.SESSION_TIMEOUT_MINUTES) || 15;
+    }
+
+    if (process.env.HUMAN_MODE_TIMEOUT_MINUTES) {
+        config.sessionConfig.humanModeTimeoutMinutes = Number(process.env.HUMAN_MODE_TIMEOUT_MINUTES) || 30;
+    } else if (!config.sessionConfig.humanModeTimeoutMinutes) {
+        config.sessionConfig.humanModeTimeoutMinutes = 30;
     }
 
     return config;

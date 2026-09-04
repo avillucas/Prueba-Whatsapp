@@ -22,10 +22,13 @@ export interface ActiveSession {
   engine: DecisionEngine;
   flowId: string;
   lastActivityAt: number; // Timestamp en ms
+  isHumanMode?: boolean; // Indica si un ASESOR intervino manualmente
+  humanModeStartedAt?: number; // Timestamp en ms cuando el ASESOR tomó el control
 }
 
 export class WhatsAppAdapter {
   private activeSessions = new Map<string, ActiveSession>(); // remoteJid -> Session
+  private botSentMessageIds = new Set<string>(); // IDs de mensajes enviados por el bot para diferenciar del ASESOR
   private leadManager: SessionLeadManager;
   private flowProvider: FlowProvider;
   private authStorage: AuthStorageAdapter;
@@ -80,6 +83,39 @@ export class WhatsAppAdapter {
     return this.activeSessions.size;
   }
 
+  public getActiveSessionsMap(): Map<string, ActiveSession> {
+    return this.activeSessions;
+  }
+
+  public setHumanMode(remoteJid: string, isHumanMode: boolean): boolean {
+    const session = this.activeSessions.get(remoteJid);
+    if (!session) return false;
+    session.isHumanMode = isHumanMode;
+    if (isHumanMode) {
+      session.humanModeStartedAt = Date.now();
+    }
+    session.lastActivityAt = Date.now();
+    return true;
+  }
+
+  public async sendBotMessage(sock: any, jid: string, content: any, options?: any): Promise<any> {
+    if (!sock) return null;
+    try {
+      const result = options !== undefined
+        ? await sock.sendMessage(jid, content, options)
+        : await sock.sendMessage(jid, content);
+      if (result && result.key && result.key.id) {
+        this.botSentMessageIds.add(result.key.id);
+        setTimeout(() => {
+          this.botSentMessageIds.delete(result.key.id);
+        }, 60000);
+      }
+      return result;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   public startTimeoutChecker(): void {
     if (this.timeoutTimer) return;
     this.timeoutTimer = setInterval(() => {
@@ -99,9 +135,17 @@ export class WhatsAppAdapter {
   public async checkSessionTimeouts(): Promise<void> {
     const timeoutMinutes = this.sessionConfig?.timeoutMinutes || 15;
     const timeoutMs = timeoutMinutes * 60 * 1000;
+    const humanTimeoutMinutes = this.sessionConfig?.humanModeTimeoutMinutes || 30;
+    const humanTimeoutMs = humanTimeoutMinutes * 60 * 1000;
     const now = Date.now();
 
     for (const [remoteJid, session] of Array.from(this.activeSessions.entries())) {
+      // Si está en Modo Asesor y superó el timeout de inactividad humana
+      if (session.isHumanMode && now - session.lastActivityAt >= humanTimeoutMs) {
+        session.isHumanMode = false;
+        ErrorHandler.logSystem('WhatsAppAdapter', `Modo Asesor despausado automáticamente por inactividad (${humanTimeoutMinutes} min) para ${remoteJid}`);
+      }
+
       if (now - session.lastActivityAt >= timeoutMs) {
         ErrorHandler.logSystem('WhatsAppAdapter', `Sesión ${session.sessionId} para ${remoteJid} expiró por inactividad (${timeoutMinutes} min). Cerrando...`);
 
@@ -110,7 +154,7 @@ export class WhatsAppAdapter {
 
         if (this.currentSock && this.status === 'CONNECTED') {
           try {
-            await this.currentSock.sendMessage(remoteJid, {
+            await this.sendBotMessage(this.currentSock, remoteJid, {
               text: "⚠️ La conversación se ha cerrado automáticamente por inactividad. ¡Escríbenos de nuevo cuando desees volver a comenzar!"
             });
           } catch (e: any) {
@@ -220,6 +264,24 @@ export class WhatsAppAdapter {
     return rawJid;
   }
 
+  private extractMessageText(messageContent: any): string {
+    if (!messageContent) return "";
+    const content = messageContent.ephemeralMessage?.message || messageContent;
+
+    return (
+      content.conversation ||
+      content.extendedTextMessage?.text ||
+      content.buttonsResponseMessage?.selectedButtonId ||
+      content.templateButtonReplyMessage?.selectedId ||
+      content.listResponseMessage?.singleSelectReply?.selectedRowId ||
+      content.imageMessage?.caption ||
+      content.videoMessage?.caption ||
+      content.documentMessage?.caption ||
+      content.documentWithCaptionMessage?.message?.documentMessage?.caption ||
+      ""
+    );
+  }
+
   async start() {
     await this.authStorage.beforeAuth();
     const { state, saveCreds } = await useMultiFileAuthState(this.authStorage.getAuthDir());
@@ -291,21 +353,84 @@ export class WhatsAppAdapter {
       if (m.type !== 'notify') return;
 
       const msg = m.messages[0];
-      if (!msg || !msg.message || msg.key.fromMe || !msg.key.remoteJid) return;
+      if (!msg || !msg.message || !msg.key.remoteJid) return;
 
       const rawJid = msg.key.remoteJid;
       if (rawJid.endsWith('@g.us') || rawJid.endsWith('@newsletter') || rawJid === 'status@broadcast') {
         return;
       }
 
+      // 1. Mensajes enviados desde nuestra propia cuenta (fromMe: true)
+      if (msg.key.fromMe) {
+        // Si el mensaje fue generado programáticamente por el bot, ignorar
+        if (msg.key.id && this.botSentMessageIds.has(msg.key.id)) {
+          return;
+        }
+
+        // Si NO fue generado por el bot, se trata de un ASESOR humano respondiendo desde WhatsApp Business
+        const messageContent = msg.message.ephemeralMessage?.message || msg.message;
+        if (messageContent.reactionMessage || messageContent.protocolMessage || messageContent.pollUpdateMessage) {
+          return;
+        }
+
+        const text = this.extractMessageText(messageContent).trim();
+        const remoteJid = await this.resolveJid(sock, msg);
+
+        const cleanText = text.toLowerCase();
+        if (cleanText === '#bot' || cleanText === '#reanudar' || cleanText === '#menu') {
+          const session = this.activeSessions.get(remoteJid);
+          if (session) {
+            session.isHumanMode = false;
+            session.lastActivityAt = Date.now();
+            ErrorHandler.logSystem('WhatsAppAdapter', `[ASESOR] Asesor reactivó el bot para ${remoteJid} con comando '${text}'`);
+            await this.sendBotMessage(sock, remoteJid, { text: "🤖 Automatización reactivada por el Asesor." });
+          }
+          return;
+        }
+
+        // Marcar o crear sesión en Modo Asesor (isHumanMode = true)
+        let session = this.activeSessions.get(remoteJid);
+        if (!session) {
+          const sessionId = SessionIdGenerator.generate(remoteJid);
+          const flowId = this.getFlowIdForPhone(remoteJid);
+          let engine: DecisionEngine;
+          if (this.flowManager) {
+            try {
+              engine = this.flowManager.createEngine(flowId);
+            } catch (_err) {
+              engine = new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId());
+            }
+          } else {
+            engine = new DecisionEngine(this.flowProvider.getFlow(), this.flowProvider.getInitialNodeId());
+          }
+          session = {
+            sessionId,
+            engine,
+            flowId,
+            lastActivityAt: Date.now(),
+            isHumanMode: true,
+            humanModeStartedAt: Date.now()
+          };
+          this.activeSessions.set(remoteJid, session);
+        } else {
+          session.isHumanMode = true;
+          session.humanModeStartedAt = Date.now();
+          session.lastActivityAt = Date.now();
+        }
+
+        ErrorHandler.logSystem('WhatsAppAdapter', `[ASESOR] Intervención detectada en chat ${remoteJid}: "${text}". Automatización pausada (isHumanMode = true).`);
+        return;
+      }
+
+      // 2. Mensajes entrantes del CLIENTE (fromMe: false)
       const messageContent = msg.message.ephemeralMessage?.message || msg.message;
-      const text = messageContent.conversation || 
-                   messageContent.extendedTextMessage?.text || 
-                   messageContent.buttonsResponseMessage?.selectedButtonId || 
-                   "";
 
-      if (!text.trim()) return;
+      // Ignorar mensajes de sistema/protocolo, reacciones o encuestas
+      if (messageContent.reactionMessage || messageContent.protocolMessage || messageContent.pollUpdateMessage) {
+        return;
+      }
 
+      const text = this.extractMessageText(messageContent);
       const remoteJid = await this.resolveJid(sock, msg);
 
       if (rawJid !== remoteJid) {
@@ -362,18 +487,31 @@ export class WhatsAppAdapter {
 
       const initialNode = engine.getCurrentNode();
       ErrorHandler.logSystem('WhatsAppAdapter', `Enviando menú inicial a ${targetJid} (Nodo: ${initialNode.id})`);
-      await sock.sendMessage(targetJid, { text: initialNode.text }, sendOptions);
+      await this.sendBotMessage(sock, targetJid, { text: initialNode.text }, sendOptions);
       return;
     }
 
     const session = this.activeSessions.get(remoteJid)!;
     session.lastActivityAt = Date.now();
     
+    // Si la sesión está en Modo Asesor (intervención humana)
+    if (session.isHumanMode) {
+      const cleanText = text.toLowerCase();
+      // Si el cliente envía comando de menú o reactivación explícita
+      if (cleanText === '#bot' || cleanText === 'menu' || cleanText === 'bot') {
+        session.isHumanMode = false;
+        ErrorHandler.logSystem('WhatsAppAdapter', `CLIENTE ${remoteJid} solicitó reactivar el bot con comando '${text}'. Reanudando automatización...`);
+      } else {
+        ErrorHandler.logSystem('WhatsAppAdapter', `[Modo Asesor] Mensaje de CLIENTE ${remoteJid} omitido por atención humana de ASESOR: "${text}"`);
+        return; // No enviar respuesta automática
+      }
+    }
+
     if (text.toLowerCase() === 'salir' || text.toLowerCase() === 'menu') {
       await this.leadManager.finalizeSession(session.sessionId);
       this.activeSessions.delete(remoteJid);
       ErrorHandler.logSystem('WhatsAppAdapter', `Sesión finalizada manualmente por usuario ${remoteJid}`);
-      await sock.sendMessage(targetJid, { text: "Conversación finalizada. ¡Escríbenos de nuevo para volver a empezar!" }, sendOptions);
+      await this.sendBotMessage(sock, targetJid, { text: "Conversación finalizada. ¡Escríbenos de nuevo para volver a empezar!" }, sendOptions);
       return;
     }
 
@@ -382,7 +520,7 @@ export class WhatsAppAdapter {
       const validationError = this.leadManager.validateField(currentNode.extractData, text);
       if (validationError) {
         ErrorHandler.logSystem('WhatsAppAdapter', `Validación fallida para ${remoteJid} (Campo: ${currentNode.extractData}): "${text}"`);
-        await sock.sendMessage(targetJid, { text: `⚠️ ${validationError}\n\n${currentNode.text}` }, sendOptions);
+        await this.sendBotMessage(sock, targetJid, { text: `⚠️ ${validationError}\n\n${currentNode.text}` }, sendOptions);
         return;
       }
     }
@@ -421,7 +559,7 @@ export class WhatsAppAdapter {
       }
 
       ErrorHandler.logSystem('WhatsAppAdapter', `Enviando respuesta a ${targetJid} (Nodo: ${targetNode.id})`);
-      await sock.sendMessage(targetJid, { text: targetNode.text }, sendOptions);
+      await this.sendBotMessage(sock, targetJid, { text: targetNode.text }, sendOptions);
 
       if (targetNode.id.includes("FIN") || targetNode.id.includes("CIERRE")) {
         ErrorHandler.logSystem('WhatsAppAdapter', `Fin de flujo alcanzado para ${session.sessionId}. Guardando Lead...`);
@@ -431,7 +569,7 @@ export class WhatsAppAdapter {
     } else {
       const currentNode = session.engine.getCurrentNode();
       ErrorHandler.logSystem('WhatsAppAdapter', `Opción no válida enviada por ${remoteJid}: "${text}". ${error || ''}. Reenviando nodo actual.`);
-      await sock.sendMessage(targetJid, { text: `Opción no válida.\n\n${currentNode.text}` }, sendOptions);
+      await this.sendBotMessage(sock, targetJid, { text: `Opción no válida.\n\n${currentNode.text}` }, sendOptions);
     }
   }
 }

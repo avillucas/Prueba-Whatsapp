@@ -14,7 +14,9 @@ describe('AdminServer Test Suite', () => {
       getQR: jest.fn().mockReturnValue('test-qr-code-data'),
       getConnectedUser: jest.fn().mockReturnValue(null),
       resetAccount: jest.fn().mockResolvedValue(undefined),
-      updateSessionConfig: jest.fn()
+      updateSessionConfig: jest.fn(),
+      getActiveSessionsMap: jest.fn().mockReturnValue(new Map()),
+      setHumanMode: jest.fn().mockReturnValue(true)
     };
 
     mockConfig = {
@@ -438,7 +440,9 @@ describe('AdminServer Test Suite', () => {
       getQR: jest.fn().mockReturnValue(null),
       getConnectedUser: jest.fn().mockReturnValue(null),
       resetAccount: jest.fn().mockResolvedValue(undefined),
-      updateSessionConfig: jest.fn()
+      updateSessionConfig: jest.fn(),
+      getActiveSessionsMap: jest.fn().mockReturnValue(new Map()),
+      setHumanMode: jest.fn().mockReturnValue(true)
     };
     (adminServer as any).whatsappAdapter = mockAdapter;
     await adminServer.start();
@@ -451,5 +455,66 @@ describe('AdminServer Test Suite', () => {
 
     expect(res.statusCode).toBe(200);
     expect(mockAdapter.updateSessionConfig).toHaveBeenCalledWith(expect.objectContaining({ timeoutMinutes: 25 }));
+  });
+
+  it('debería retornar la lista de sesiones activas en GET /api/sessions', async () => {
+    const sampleMap = new Map();
+    sampleMap.set('5491112345678@s.whatsapp.net', {
+      sessionId: 'SESS_1',
+      flowId: 'flow_cfp412',
+      lastActivityAt: 100000,
+      isHumanMode: true
+    });
+    const mockAdapter = {
+      getStatus: jest.fn(),
+      getQR: jest.fn(),
+      getConnectedUser: jest.fn(),
+      resetAccount: jest.fn(),
+      updateSessionConfig: jest.fn(),
+      getActiveSessionsMap: jest.fn().mockReturnValue(sampleMap),
+      setHumanMode: jest.fn().mockReturnValue(true)
+    };
+    (adminServer as any).whatsappAdapter = mockAdapter;
+    await adminServer.start();
+
+    const res = await makeRequest('GET', '/api/sessions', {
+      Cookie: 'admin_session=testpassword123'
+    });
+
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.sessions).toHaveLength(1);
+    expect(data.sessions[0].remoteJid).toBe('5491112345678@s.whatsapp.net');
+    expect(data.sessions[0].isHumanMode).toBe(true);
+  });
+
+  it('debería alternar el Modo Asesor en POST /api/sessions/:jid/toggle-human', async () => {
+    const sampleMap = new Map();
+    sampleMap.set('5491112345678@s.whatsapp.net', {
+      sessionId: 'SESS_1',
+      flowId: 'flow_cfp412',
+      lastActivityAt: 100000,
+      isHumanMode: false
+    });
+    const mockAdapter = {
+      getStatus: jest.fn(),
+      getQR: jest.fn(),
+      getConnectedUser: jest.fn(),
+      resetAccount: jest.fn(),
+      updateSessionConfig: jest.fn(),
+      getActiveSessionsMap: jest.fn().mockReturnValue(sampleMap),
+      setHumanMode: jest.fn().mockReturnValue(true)
+    };
+    (adminServer as any).whatsappAdapter = mockAdapter;
+    await adminServer.start();
+
+    const res = await makeRequest('POST', '/api/sessions/5491112345678%40s.whatsapp.net/toggle-human', {
+      Cookie: 'admin_session=testpassword123'
+    }, { isHumanMode: true });
+
+    expect(res.statusCode).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data.success).toBe(true);
+    expect(mockAdapter.setHumanMode).toHaveBeenCalledWith('5491112345678@s.whatsapp.net', true);
   });
 });

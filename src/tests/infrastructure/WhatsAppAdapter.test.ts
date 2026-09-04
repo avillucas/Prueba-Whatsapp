@@ -396,4 +396,189 @@ describe("WhatsAppAdapter", () => {
       expect.objectContaining({ text: expect.stringContaining('cerrado automáticamente') })
     );
   });
+
+  it("Debería enviar el saludo inicial si lo primero que envía el usuario es un archivo/audio/imagen sin texto", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    await adapter.start();
+
+    const upsertHandler = eventListeners['messages.upsert'];
+    const userAudioJid = "5491188888888@s.whatsapp.net";
+    const userImageJid = "5491177777777@s.whatsapp.net";
+
+    // 1. Primer mensaje es un audio (audioMessage sin texto)
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: userAudioJid },
+        message: { audioMessage: { url: 'https://example.com/audio.ogg', mimetype: 'audio/ogg' } }
+      }]
+    });
+
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userAudioJid, { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has(userAudioJid)).toBe(true);
+
+    // 2. Primer mensaje es una imagen sin leyenda (imageMessage sin caption)
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: userImageJid },
+        message: { imageMessage: { url: 'https://example.com/photo.jpg', mimetype: 'image/jpeg' } }
+      }]
+    });
+
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userImageJid, { text: "Menú Principal" }, expect.anything());
+    expect((adapter as any).activeSessions.has(userImageJid)).toBe(true);
+  });
+
+  it("Debería procesar la leyenda (caption) de imágenes/videos o ignorar mensajes de reacción", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+    await adapter.start();
+
+    const upsertHandler = eventListeners['messages.upsert'];
+    const userJid = "5491166666666@s.whatsapp.net";
+
+    // 1. Mensaje de reacción -> Ignorado
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: userJid },
+        message: { reactionMessage: { text: "👍", key: { id: "123" } } }
+      }]
+    });
+    expect(mockSock.sendMessage).not.toHaveBeenCalled();
+
+    // 2. Imagen con caption "A" -> inicia sesión y si se envía otra opción procesa "A"
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: userJid },
+        message: { imageMessage: { caption: "Hola" } }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Menú Principal" }, expect.anything());
+
+    await upsertHandler({
+      type: 'notify',
+      messages: [{
+        key: { fromMe: false, remoteJid: userJid },
+        message: { imageMessage: { caption: "A" } }
+      }]
+    });
+    expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Ingrese Nombre" }, expect.anything());
+  });
+
+  describe("Modo Asesor (Handover Humano y Pausa de Automatización)", () => {
+    it("Debería activar Modo Asesor cuando un ASESOR responde desde WhatsApp Business y pausar respuestas automáticas", async () => {
+      const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+      await adapter.start();
+      const upsertHandler = eventListeners['messages.upsert'];
+      const userJid = "5491155555555@s.whatsapp.net";
+
+      // 1. CLIENTE envía "Hola" -> Bot envía menú inicial
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: false, remoteJid: userJid },
+          message: { conversation: "Hola" }
+        }]
+      });
+      expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "Menú Principal" }, expect.anything());
+      mockSock.sendMessage.mockClear();
+
+      // 2. ASESOR envía mensaje saliente desde la app (fromMe: true, ID no generado por bot)
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: true, remoteJid: userJid, id: "ASESOR_MSG_123" },
+          message: { conversation: "Hola, soy el asesor Juan, ¿en qué te puedo ayudar?" }
+        }]
+      });
+
+      const session = (adapter as any).activeSessions.get(userJid);
+      expect(session).toBeDefined();
+      expect(session.isHumanMode).toBe(true);
+
+      // 3. CLIENTE responde al ASESOR -> El bot NO debe enviar respuesta automática
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: false, remoteJid: userJid },
+          message: { conversation: "Buenas tardes, quería consultar los requisitos de inscripción." }
+        }]
+      });
+      expect(mockSock.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it("Debería permitir al ASESOR reactivar la automatización con el comando #bot", async () => {
+      const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+      await adapter.start();
+      const upsertHandler = eventListeners['messages.upsert'];
+      const userJid = "5491144444444@s.whatsapp.net";
+
+      // Iniciar sesión en modo asesor
+      adapter.setHumanMode(userJid, true);
+      (adapter as any).activeSessions.set(userJid, {
+        sessionId: "SESS_TEST",
+        engine: {} as any,
+        flowId: "flow_cfp412",
+        lastActivityAt: Date.now(),
+        isHumanMode: true
+      });
+
+      // ASESOR envía #bot
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: true, remoteJid: userJid, id: "ASESOR_CMD_1" },
+          message: { conversation: "#bot" }
+        }]
+      });
+
+      const session = (adapter as any).activeSessions.get(userJid);
+      expect(session.isHumanMode).toBe(false);
+      expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, { text: "🤖 Automatización reactivada por el Asesor." }, expect.anything());
+    });
+
+    it("Debería permitir al CLIENTE solicitar el menú y reactivar el bot cuando está en Modo Asesor", async () => {
+      const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+      await adapter.start();
+      const upsertHandler = eventListeners['messages.upsert'];
+      const userJid = "5491133333333@s.whatsapp.net";
+
+      // 1. Mensaje inicial de CLIENTE
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: false, remoteJid: userJid },
+          message: { conversation: "Hola" }
+        }]
+      });
+
+      // 2. Intervención de ASESOR
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: true, remoteJid: userJid, id: "HUMAN_1" },
+          message: { conversation: "Atendido por asesor." }
+        }]
+      });
+      expect((adapter as any).activeSessions.get(userJid).isHumanMode).toBe(true);
+      mockSock.sendMessage.mockClear();
+
+      // 3. CLIENTE envía "menu"
+      await upsertHandler({
+        type: 'notify',
+        messages: [{
+          key: { fromMe: false, remoteJid: userJid },
+          message: { conversation: "menu" }
+        }]
+      });
+
+      // La sesión se despausa y se reinicia
+      expect(mockSock.sendMessage).toHaveBeenCalledWith(userJid, expect.objectContaining({
+        text: expect.stringContaining("Conversación finalizada")
+      }), expect.anything());
+    });
+  });
 });
+
