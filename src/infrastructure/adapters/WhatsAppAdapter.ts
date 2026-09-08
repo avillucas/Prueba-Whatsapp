@@ -100,20 +100,16 @@ export class WhatsAppAdapter {
 
   public async sendBotMessage(sock: any, jid: string, content: any, options?: any): Promise<any> {
     if (!sock) return null;
-    try {
-      const result = options !== undefined
-        ? await sock.sendMessage(jid, content, options)
-        : await sock.sendMessage(jid, content);
-      if (result && result.key && result.key.id) {
-        this.botSentMessageIds.add(result.key.id);
-        setTimeout(() => {
-          this.botSentMessageIds.delete(result.key.id);
-        }, 60000);
-      }
-      return result;
-    } catch (err) {
-      throw err;
+    const result = options !== undefined
+      ? await sock.sendMessage(jid, content, options)
+      : await sock.sendMessage(jid, content);
+    if (result && result.key && result.key.id) {
+      this.botSentMessageIds.add(result.key.id);
+      setTimeout(() => {
+        this.botSentMessageIds.delete(result.key.id);
+      }, 60000);
     }
+    return result;
   }
 
   public startTimeoutChecker(): void {
