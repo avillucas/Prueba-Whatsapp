@@ -72,6 +72,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Check SSH reachability
+        env:
+          GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
+        run: |
+          set -e
+          echo "Checking SSH reachability on ${GCP_VM_HOST}:22..."
+          timeout 15 bash -c 'cat < /dev/null > /dev/tcp/${GCP_VM_HOST}/22'
+
       - name: Deploy & Inject Secrets via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -79,6 +87,7 @@ jobs:
           username: ${{ secrets.GCP_VM_USERNAME }}
           key: ${{ secrets.GCP_VM_SSH_KEY }}
           port: 22
+          timeout: 60s
           command_timeout: 30m
           script: |
             set -e
