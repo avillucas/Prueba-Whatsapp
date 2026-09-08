@@ -31,6 +31,24 @@ describe("WhatsAppAdapter", () => {
     jest.clearAllMocks();
   });
 
+  it("Debería ignorar cambios de modo y mensajes cuando no hay sesión o socket", async () => {
+    const adapter = new WhatsAppAdapter(mockFlowProvider, mockRepo);
+
+    expect(adapter.setHumanMode("usuario-inexistente", true)).toBe(false);
+    (adapter as any).activeSessions.set("usuario", {
+      sessionId: "SESS_TEST",
+      engine: {} as any,
+      flowId: "flow_cfp412",
+      lastActivityAt: 0,
+      isHumanMode: false
+    });
+    expect(adapter.setHumanMode("usuario", true)).toBe(true);
+    expect((adapter as any).activeSessions.get("usuario").isHumanMode).toBe(true);
+    expect(adapter.setHumanMode("usuario", false)).toBe(true);
+    expect((adapter as any).activeSessions.get("usuario").isHumanMode).toBe(false);
+    await expect(adapter.sendBotMessage(null, "usuario", { text: "mensaje" })).resolves.toBeNull();
+  });
+
   const mockFlowProvider: FlowProvider = {
     getFlow: () => [
       {

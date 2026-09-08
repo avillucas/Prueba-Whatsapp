@@ -379,7 +379,7 @@ export class WhatsAppAdapter {
             session.isHumanMode = false;
             session.lastActivityAt = Date.now();
             ErrorHandler.logSystem('WhatsAppAdapter', `[ASESOR] Asesor reactivó el bot para ${remoteJid} con comando '${text}'`);
-            await this.sendBotMessage(sock, remoteJid, { text: "🤖 Automatización reactivada por el Asesor." });
+            await this.sendBotMessage(sock, remoteJid, { text: "🤖 Automatización reactivada por el Asesor." }, {});
           }
           return;
         }

@@ -29,6 +29,7 @@
   },
   "sessionConfig": {
     "timeoutMinutes": 25,
+    "humanModeTimeoutMinutes": 30,
     "defaultFlowId": "flow_cfp412"
   }
 }
