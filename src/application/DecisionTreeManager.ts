@@ -121,10 +121,6 @@ export class DecisionTreeManager {
   public async saveFlow(flowId: string, nodes: DecisionNode[], initialNodeId: string = 'MSG_INICIAL'): Promise<void> {
     this.registerFlowNodes(flowId, nodes, initialNodeId);
 
-    if (this.flowRepository) {
-      await this.flowRepository.saveFlow(flowId, nodes);
-    }
-
     if (this.flowsDir) {
       try {
         if (!fs.existsSync(this.flowsDir)) {
@@ -134,6 +130,14 @@ export class DecisionTreeManager {
         fs.writeFileSync(filePath, JSON.stringify(nodes, null, 2), 'utf-8');
       } catch (err: any) {
         console.error(`⚠️ No se pudo guardar respaldo local en disco para '${flowId}': ${err.message}`);
+      }
+    }
+
+    if (this.flowRepository) {
+      try {
+        await this.flowRepository.saveFlow(flowId, nodes);
+      } catch (err: any) {
+        console.error(`⚠️ No se pudo sincronizar el árbol '${flowId}' con Redis: ${err.message}. Se conserva la versión local.`);
       }
     }
   }

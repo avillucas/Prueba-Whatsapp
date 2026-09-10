@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { DecisionTreeManager, SimpleFlowProvider } from '../../application/DecisionTreeManager';
 import { SessionLeadManager } from '../../application/SessionLeadManager';
 import { LeadRepository } from '../../domain/LeadRepository';
+import { FlowRepository } from '../../domain/FlowRepository';
 import { LeadContacto, LeadListaEspera } from '../../domain/Lead';
 import { DecisionNode } from 'motor-decision';
 
@@ -67,6 +68,22 @@ describe('DecisionTreeManager & Session Integration', () => {
 
     const engine = treeManager.createEngine('custom_flow');
     expect(engine.getCurrentNode().id).toBe('INIT');
+  });
+
+  it('should preserve the local flow when Redis synchronization fails', async () => {
+    const tmpDir = path.resolve(process.cwd(), 'tmp_save_flows');
+    const repository: FlowRepository = {
+      getFlow: jest.fn(),
+      saveFlow: jest.fn().mockRejectedValue(new Error('Redis unavailable')),
+      listFlows: jest.fn()
+    };
+    const manager = new DecisionTreeManager(tmpDir, repository);
+    const nodes: DecisionNode[] = [{ id: 'INIT', text: 'Hola', options: [] }];
+
+    await expect(manager.saveFlow('local_flow', nodes, 'INIT')).resolves.toBeUndefined();
+    expect(fs.readFileSync(path.join(tmpDir, 'local_flow.json'), 'utf-8')).toContain('"INIT"');
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
   it('should replace placeholders in node text using renderNodeText', () => {

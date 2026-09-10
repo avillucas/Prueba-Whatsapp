@@ -1016,6 +1016,12 @@ export class AdminServer {
       try {
         var res = await fetch('/api/flows');
         var data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'La API no pudo devolver la lista de árboles');
+        }
+        if (!data || !Array.isArray(data.flows)) {
+          throw new Error('La respuesta de la API no contiene una lista de árboles válida');
+        }
         var select = document.getElementById('selectFlows');
         select.innerHTML = '';
         data.flows.forEach(function(f) {
