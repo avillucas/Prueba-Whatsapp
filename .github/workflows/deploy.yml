@@ -77,8 +77,27 @@ jobs:
           GCP_VM_HOST: ${{ secrets.GCP_VM_HOST }}
         run: |
           set -e
-          echo "Checking SSH reachability on ${GCP_VM_HOST}:22..."
-          timeout 15 bash -c 'cat < /dev/null > /dev/tcp/${GCP_VM_HOST}/22'
+          if [ -z "${GCP_VM_HOST}" ]; then
+            echo "::error::GCP_VM_HOST no está configurado en GitHub Secrets."
+            exit 1
+          fi
+
+          echo "Checking DNS resolution for ${GCP_VM_HOST}..."
+          if ! getent ahosts "${GCP_VM_HOST}" >/dev/null; then
+            echo "::error::No se pudo resolver GCP_VM_HOST=${GCP_VM_HOST}."
+            echo "Verifica que el secreto contenga una IP pública o un nombre DNS válido."
+            exit 1
+          fi
+
+          echo "Checking TCP reachability on ${GCP_VM_HOST}:22..."
+          if timeout 15s bash -c 'cat < /dev/null > /dev/tcp/${GCP_VM_HOST}/22'; then
+            echo "SSH port 22 is reachable."
+          else
+            status=$?
+            echo "::error::No se pudo alcanzar ${GCP_VM_HOST}:22 desde GitHub Actions (exit ${status})."
+            echo "Verifica la IP pública de la VM, la regla de firewall TCP/22, sshd y las reglas de red de GCP."
+            exit 1
+          fi
 
       - name: Deploy & Inject Secrets via SSH
         uses: appleboy/ssh-action@v1.0.3
