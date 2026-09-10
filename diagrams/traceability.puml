@@ -1,0 +1,40 @@
+@startuml TraceabilityDiagram
+left to right direction
+skinparam packageStyle rectangle
+
+title Trazabilidad de Artefactos
+
+package "Requisitos" {
+  [RF-01 Mensajes]
+  [RF-02 Flujos JSON]
+  [RF-03 Leads]
+  [RF-07 Administración]
+}
+package "Casos de uso" {
+  [UC-01 Atender consulta]
+  [UC-02 Lista de espera]
+  [UC-06 Administrar flujos]
+}
+package "Implementación" {
+  [WhatsAppAdapter]
+  [DecisionTreeManager]
+  [SessionLeadManager]
+  [AdminServer]
+}
+package "Verificación" {
+  [Pruebas Jest]
+  [Lint y TypeScript]
+}
+
+[RF-01 Mensajes] --> [UC-01 Atender consulta]
+[RF-02 Flujos JSON] --> [UC-06 Administrar flujos]
+[RF-03 Leads] --> [UC-02 Lista de espera]
+[RF-07 Administración] --> [UC-06 Administrar flujos]
+[UC-01 Atender consulta] --> [WhatsAppAdapter]
+[UC-01 Atender consulta] --> [SessionLeadManager]
+[UC-02 Lista de espera] --> [SessionLeadManager]
+[UC-06 Administrar flujos] --> [DecisionTreeManager]
+[UC-06 Administrar flujos] --> [AdminServer]
+[WhatsAppAdapter] --> [Pruebas Jest]
+[DecisionTreeManager] --> [Lint y TypeScript]
+@enduml

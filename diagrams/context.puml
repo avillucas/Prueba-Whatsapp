@@ -6,6 +6,7 @@ title Diagrama de Contexto - Sistema WhatsApp Bot
 
 actor "Usuario Final (WhatsApp)" as UserWA
 actor "Operador CLI / Admin" as UserCLI
+actor "Administrador del Sistema" as Admin
 
 package "Límite del Sistema WhatsApp Bot" {
     component [Sistema WhatsApp Bot\n(Aplicación Node.js/TypeScript)] as SystemBot
@@ -19,11 +20,13 @@ package "Librerías y Servicios Externos" {
     cloud "Google Sheets API\n(Persistencia de Leads)" as SheetsAPI
     database "Sistema de Archivos Local\n(CSVs, Logs, auth_info)" as LocalFS
     cloud "GCP Cloud Logging\n(Observabilidad Cloud)" as GCPLogging
+    cloud "GitHub Actions\n(CI/CD)" as GitHubActions
 }
 
 UserWA --> BaileysLib : Mensajes WhatsApp (Texto/Opciones)
 BaileysLib --> SystemBot : Eventos de red / Mensajes entrantes
 UserCLI --> SystemBot : Entrada I/O Interactiva (Consola)
+Admin --> SystemBot : Panel web / Gestión de flujos
 
 SystemBot --> MotorLib : Consulta árbol de decisiones (JSON)
 SystemBot --> RedisDB : Lee/Escribe credenciales de sesión local
@@ -31,5 +34,6 @@ SystemBot --> FirestoreDB : Sincroniza credenciales de sesión en GCP
 SystemBot --> SheetsAPI : Exporta leads capturados
 SystemBot --> LocalFS : Lee flujos JSON / Guarda CSVs y logs
 SystemBot --> GCPLogging : Envía registros del sistema a GCP
+GitHubActions --> SystemBot : Despliegue automatizado por SSH
 
 @enduml

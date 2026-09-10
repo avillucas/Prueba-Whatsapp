@@ -32,6 +32,15 @@ node "Docker Host Environment" {
             [ConsoleAdapter Component]
         }
 
+        component [Administrative Web Port] as CompAdmin {
+            [AdminServer]
+        }
+
+        component [Flow Repository Port] as CompFlows {
+            [DecisionTreeManager]
+            [RedisFlowRepository]
+        }
+
         component [Auth Storage Port] as CompAuth {
             [RedisAuthAdapter]
             [FirestoreAuthAdapter]
@@ -65,6 +74,8 @@ CompComm --> P_App
 CompComm --> CompAuth
 CompComm --> CompRepo
 CompComm --> CompLog
+CompAdmin --> CompFlows
+CompFlows --> CompLog
 CompConfig ..> CompComm : Configura
 
 ' Conexiones a volúmenes
@@ -72,6 +83,7 @@ CompAuth ..> VolAuth : Credenciales temporales
 CompRepo ..> VolData : Escribe CSVs
 CompLog ..> VolLogs : Archivos Pino
 CompComm ..> VolFlows : Lee flow_cfp412.json
+CompFlows ..> VolFlows : Lee y guarda flujos JSON
 
 ' Conexiones externas
 CompComm <--> WACloud : WebSocket (Baileys)

@@ -20,6 +20,12 @@ package "Domain Layer" {
         + findAll(): Promise<Lead[]>
     }
 
+    interface FlowRepository {
+        + getFlow(flowId: string): Promise<DecisionNode[] | null>
+        + saveFlow(flowId: string, nodes: DecisionNode[]): Promise<void>
+        + listFlows(): Promise<string[]>
+    }
+
     interface AuthStorageAdapter {
         + beforeAuth(): Promise<void>
         + afterSaveCreds(): Promise<void>
@@ -33,6 +39,13 @@ package "Domain Layer" {
 }
 
 package "Application Layer" {
+    class DecisionTreeManager {
+        - flowRegistry: Map<string, DecisionNode[]>
+        + loadFlows(): Promise<void>
+        + saveFlow(flowId: string, nodes: DecisionNode[]): Promise<void>
+        + getFlowProvider(flowId?: string): FlowProvider
+    }
+
     class SessionLeadManager {
         - activeSessions: Map<string, Partial<Lead>>
         + getOrCreateSession(sessionId: string): Partial<Lead>
@@ -43,6 +56,12 @@ package "Application Layer" {
 }
 
 package "Infrastructure Layer - Repositories" {
+    class RedisFlowRepository implements FlowRepository {
+        + getFlow(flowId: string): Promise<DecisionNode[] | null>
+        + saveFlow(flowId: string, nodes: DecisionNode[]): Promise<void>
+        + listFlows(): Promise<string[]>
+    }
+
     class LeadRepositoryFactory {
         + {static} create(type: string, config: any): LeadRepository
     }
@@ -137,6 +156,11 @@ package "Infrastructure Layer - Communication Adapters" {
         + init(): Promise<void>
         + appendRow(sheetName: string, rowData: any): Promise<void>
     }
+
+    class AdminServer {
+        + start(): Promise<void>
+        + stop(): Promise<void>
+    }
 }
 
 package "Infrastructure Layer - Utils" {
@@ -157,6 +181,8 @@ ConsoleAdapter --> SessionLeadManager : administra
 WhatsAppAdapter --> LeadRepository : usa
 WhatsAppAdapter --> AuthStorageAdapter : usa
 WhatsAppAdapter --> SessionLeadManager : administra
+AdminServer --> DecisionTreeManager : administra flujos
+DecisionTreeManager --> FlowRepository : sincroniza
 
 LeadRepositoryFactory ..> CsvLeadRepository : crea
 LeadRepositoryFactory ..> GoogleSheetsLeadRepository : crea

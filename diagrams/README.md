@@ -8,6 +8,9 @@ Este directorio contiene la documentación gráfica oficial del proyecto expresa
 | [`class.puml`](./class.puml) | **Diagrama de Clases** | Modela las clases, entidades, factorías y adaptadores según la Arquitectura Hexagonal. |
 | [`communication.puml`](./communication.puml) | **Diagrama de Comunicaciones** | Muestra el intercambio secuencial de mensajes entre objetos para el procesamiento de mensajes y la captura de leads. |
 | [`component.puml`](./component.puml) | **Diagrama de Componentes** | Representa los puertos/adaptadores, la infraestructura de contenedores Docker y el montaje de volúmenes persistentes. |
+| [`use-cases.puml`](./use-cases.puml) | **Diagrama de Casos de Uso** | Relaciona actores, casos de uso, persistencia de leads y administración de flujos. |
+| [`deployment.puml`](./deployment.puml) | **Diagrama de Despliegue** | Describe la ejecución en Docker, Redis, volúmenes, WhatsApp, GCP y GitHub Actions. |
+| [`traceability.puml`](./traceability.puml) | **Diagrama de Trazabilidad** | Vincula requisitos, casos de uso, componentes implementados y mecanismos de verificación. |
 
 ## 🛠️ Cómo Renderizar los Diagramas
 Puedes previsualizar o exportar estos archivos utilizando:

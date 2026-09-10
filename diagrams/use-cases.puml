@@ -1,0 +1,40 @@
+@startuml UseCaseDiagram
+left to right direction
+skinparam packageStyle rectangle
+
+title Casos de Uso - WhatsApp Bot
+
+actor "Usuario final\n(WhatsApp)" as User
+actor "Operador CLI" as Cli
+actor "Administrador" as Admin
+actor "WhatsApp / Baileys" as WhatsApp
+actor "Repositorio de leads" as Leads
+actor "Almacenamiento de sesión" as Auth
+actor "Repositorio de flujos" as Flows
+
+rectangle "Sistema WhatsApp Bot" {
+  usecase "Atender consulta" as UC1
+  usecase "Capturar datos\npara lista de espera" as UC2
+  usecase "Registrar consulta\npersonalizada" as UC3
+  usecase "Ejecutar flujo\npor CLI" as UC4
+  usecase "Administrar conexión\nde WhatsApp" as UC5
+  usecase "Administrar flujos" as UC6
+  usecase "Persistir lead" as UC7
+  usecase "Persistir sesión\ny credenciales" as UC8
+}
+
+User --> UC1
+User --> UC2
+User --> UC3
+Cli --> UC4
+Admin --> UC5
+Admin --> UC6
+WhatsApp --> UC1
+UC2 ..> UC7 : <<include>>
+UC3 ..> UC7 : <<include>>
+UC1 ..> UC8 : <<include>>
+UC5 ..> UC8 : <<include>>
+UC6 --> Flows
+UC7 --> Leads
+UC8 --> Auth
+@enduml

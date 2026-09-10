@@ -1,0 +1,42 @@
+@startuml DeploymentDiagram
+left to right direction
+skinparam componentStyle rectangle
+
+title Diagrama de Despliegue - WhatsApp Bot
+
+node "Host local o VM GCP" as Host {
+  node "Docker Compose" as Compose {
+    node "Contenedor aplicación" as App {
+      component "Node.js / TypeScript" as Runtime
+      component "WhatsAppAdapter" as WA
+      component "AdminServer" as Admin
+      component "DecisionTreeManager" as FlowManager
+    }
+    node "Contenedor Redis" as Redis
+  }
+  folder "Volúmenes" as Volumes {
+    artifact "flows/*.json" as Flows
+    artifact "data/*.csv" as Data
+    artifact "logs/*" as Logs
+    artifact "auth_info/*" as Auth
+  }
+}
+
+cloud "WhatsApp Web" as WhatsApp
+cloud "Google Cloud" as GCP {
+  database "Firestore" as Firestore
+  cloud "Google Sheets" as Sheets
+  cloud "Cloud Logging" as CloudLogging
+}
+cloud "GitHub Actions" as Actions
+
+WA <--> WhatsApp : Baileys / WebSocket
+FlowManager --> Flows : Lee y actualiza
+App --> Redis : Sesiones / flujos
+App --> Data : Leads CSV
+App --> Firestore : Credenciales
+App --> Sheets : Leads
+App --> CloudLogging : Logs
+Actions --> Host : SSH / Docker deploy
+Admin --> Runtime : HTTP protegido
+@enduml
