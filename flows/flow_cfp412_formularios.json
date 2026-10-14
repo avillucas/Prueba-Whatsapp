@@ -1,0 +1,353 @@
+[
+  {
+    "id": "MSG_INICIAL",
+    "text": "👋 Hola, te comunicaste con el Centro Formación Profesional nº 412. ¿En qué podemos ayudarte?\nPor favor, responde con la letra de la opción sobre la que deseas consultar:\n• A. Requisitos e inscripción a los cursos\n• B. Ver la oferta de cursos disponible\n• C. Anotarse en lista de espera\n• D. Fechas e inicio de cursada\n• E. Información detallada sobre un curso específico\n• F. Buscar cursos en otros Centros de Formación\n• G. Otros (Escribir una consulta personalizada)",
+    "extractData": "Opcion_Elegida",
+    "options": [
+      {
+        "match": "A",
+        "nextId": "RESP_A"
+      },
+      {
+        "match": "B",
+        "nextId": "RESP_B"
+      },
+      {
+        "match": "C",
+        "nextId": "MENU_LISTAS_ESPERA"
+      },
+      {
+        "match": "D",
+        "nextId": "RESP_D"
+      },
+      {
+        "match": "E",
+        "nextId": "RESP_E"
+      },
+      {
+        "match": "F",
+        "nextId": "RESP_F"
+      },
+      {
+        "match": "G",
+        "nextId": "RESP_G_1"
+      },
+      {
+        "match": "*",
+        "nextId": "MSG_INICIAL"
+      }
+    ]
+  },
+  {
+    "id": "MENU_LISTAS_ESPERA",
+    "text": "📋 Selecciona el número del curso en cuya lista de espera deseas anotarte:\n\n1. Tornería 2026\n2. Electricidad del Automóvil\n3. Carpintería 1\n4. Informática y Gestión\n5. Inyección\n6. Soldador\n7. Motos (1º Cuatrimestre)\n8. Diésel\n9. Carpintería 2\n10. Herrero\n11. Auxiliar Mecánico\n12. Motos 2\n13. CAD\n\nResponde con el número de la opción (1 al 13):",
+    "extractData": "Curso_Lista_Espera_Opcion",
+    "options": [
+      {
+        "match": "1",
+        "nextId": "FORM_TORNERIA"
+      },
+      {
+        "match": "2",
+        "nextId": "FORM_ELEC_AUTO"
+      },
+      {
+        "match": "3",
+        "nextId": "FORM_CARPINTERIA_1"
+      },
+      {
+        "match": "4",
+        "nextId": "FORM_INFORMATICA"
+      },
+      {
+        "match": "5",
+        "nextId": "FORM_INYECCION"
+      },
+      {
+        "match": "6",
+        "nextId": "FORM_SOLDADOR"
+      },
+      {
+        "match": "7",
+        "nextId": "FORM_MOTOS_1"
+      },
+      {
+        "match": "8",
+        "nextId": "FORM_DIESEL"
+      },
+      {
+        "match": "9",
+        "nextId": "FORM_CARPINTERIA_2"
+      },
+      {
+        "match": "10",
+        "nextId": "FORM_HERRERO"
+      },
+      {
+        "match": "11",
+        "nextId": "FORM_AUX_MECANICO"
+      },
+      {
+        "match": "12",
+        "nextId": "FORM_MOTOS_2"
+      },
+      {
+        "match": "13",
+        "nextId": "FORM_CAD"
+      },
+      {
+        "match": "*",
+        "nextId": "MENU_LISTAS_ESPERA"
+      }
+    ]
+  },
+  {
+    "id": "FORM_TORNERIA",
+    "text": "📝 Para anotarte en la lista de espera de *Tornería 2026*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSc_G6kUpYH9ijPCOyqbE6N_BDn94r7U7EAlkuecwsR2aIcA9w/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_ELEC_AUTO",
+    "text": "📝 Para anotarte en la lista de espera de *Electricidad del Automóvil*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSfvoUGep96J6dtK3iAa6YTLW1TU_vQlTKLdqkGXpkKl9LMvDg/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_CARPINTERIA_1",
+    "text": "📝 Para anotarte en la lista de espera de *Carpintería 1*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSeVL-d2ysfV73_ZYaDzinhUc9UiR_mQdrZBJ_IzD3woe4VF_Q/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_INFORMATICA",
+    "text": "📝 Para anotarte en la lista de espera de *Informática y Gestión*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSf2YhLvMxhu7IqEH8OpR9dvbYLdCaR_jORGIFnFtjpld9n2yg/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_INYECCION",
+    "text": "📝 Para anotarte en la lista de espera de *Inyección*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSeAwINUq0MOTL24HHSYNEIUXzOvK70CozyBui2fTqgjrt_dcg/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_SOLDADOR",
+    "text": "📝 Para anotarte en la lista de espera de *Soldador*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSdf3Ktg8NIsO73xN1-2jh1BCM-NQ7PtknA1TasM3fJBCpF_QA/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_MOTOS_1",
+    "text": "📝 Para anotarte en la lista de espera de *Motos (1º Cuatrimestre)*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLScbjD05zgbHOPbVYAC06egNY4GMKOmI_5PinCBwmShh_JS-FQ/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_DIESEL",
+    "text": "📝 Para anotarte en la lista de espera de *Diésel*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSe0m70fgga--5K-IlZ-wk5cjJMQJTVLNFwpCc8bdniQEn-G-w/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_CARPINTERIA_2",
+    "text": "📝 Para anotarte en la lista de espera de *Carpintería 2*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSdpXc8OXYiiplwteepqkS77s58HEdrIaDXf_C8HzqUVDlve_w/viewform?usp=dialog",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_HERRERO",
+    "text": "📝 Para anotarte en la lista de espera de *Herrero*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSfiIvkkp-VMhZgg6MQeQcmzhC3CbhFVv8kBEMlcVZeYys-XSg/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_AUX_MECANICO",
+    "text": "📝 Para anotarte en la lista de espera de *Auxiliar Mecánico*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSefwERMiVHdiy7HNFwThs5xtvTxam2MAXexqNnb-W__rBZ2qg/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_MOTOS_2",
+    "text": "📝 Para anotarte en la lista de espera de *Motos 2*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSeSxK0fjBOMFOQ80oQqprr9BoGa3L88Xu7huqPM0Lo7P_uUNQ/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "FORM_CAD",
+    "text": "📝 Para anotarte en la lista de espera de *CAD*, completa el siguiente formulario:\nhttps://docs.google.com/forms/d/e/1FAIpQLSeW2zDFkigaCT4LQlzwhSMEaypIvawoUdQ2v6BAv-gbTbM19Q/viewform?usp=publish-editor",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "RESP_A",
+    "text": "Inscripción de cursos, requisitos:\n• Debes traer 1 folio oficio.\n• 2 fotocopias de DNI.\n• 1 fotocopia de título realizado (primario, secundario o superior).\n• Completas una planilla de inscripción acá.\n• A partir del 02/12/26 de 18 a 21 hs comienza la inscripción para el ciclo 2027.",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "RESP_B",
+    "text": "Hola, podés mirar nuestros cursos acá:\nhttps://aprender.lomasdezamora.gov.ar/courses/academies/centrodeformacionprofesionalcfpndeg412-principal",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "RESP_D",
+    "text": "Comenzó en marzo y es anual. El 02/12/2026 de 18 a 21 hs se realiza la inscripción para el ciclo 2027.",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "RESP_E",
+    "text": "Hola, te paso información detallada de nuestros cursos:\n• Motos II: https://abc.gob.ar/formacion_profesional/buscador/1489\n• CAD: https://abc.gob.ar/formacion_profesional/buscador/1492\n• Auxiliar Mecánico: https://abc.gob.ar/formacion_profesional/buscador/1497\n• Inyección Diesel: https://abc.gob.ar/formacion_profesional/buscador/1496\n• Electricidad del Automóvil: https://abc.gob.ar/formacion_profesional/buscador/1485\n• Carpintería II: https://abc.gob.ar/formacion_profesional/buscador/1495\n• Organización de Talleres: https://abc.gob.ar/formacion_profesional/buscador/1486\n• Inyección Nafta: https://abc.gob.ar/formacion_profesional/buscador/1487\n• Motos I: https://abc.gob.ar/formacion_profesional/buscador/1488\n• Informática: https://abc.gob.ar/formacion_profesional/buscador/1491\n• CAD II: https://abc.gob.ar/formacion_profesional/buscador/1493",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "RESP_F",
+    "text": "En este link podés buscar en otro Centro:\nhttps://abc.gob.ar/formacion_profesional/buscador",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "RESP_G_1",
+    "text": "Para ayudarte con tu consulta personalizada, por favor indícanos tu Nombre y Apellido:",
+    "extractData": "Nombre_y_Apellido",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "RESP_G_2"
+      }
+    ]
+  },
+  {
+    "id": "RESP_G_2",
+    "text": "¡Gracias! Por favor, indícanos un número de teléfono de WhatsApp de contacto:",
+    "extractData": "Telefono_WhatsApp",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "RESP_G_2_EMAIL"
+      }
+    ]
+  },
+  {
+    "id": "RESP_G_2_EMAIL",
+    "text": "¡Perfecto! Ahora indícanos tu correo electrónico:",
+    "extractData": "Correo_Electronico",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "RESP_G_3"
+      }
+    ]
+  },
+  {
+    "id": "RESP_G_3",
+    "text": "Por último, escribe a continuación tu consulta o pregunta en un solo mensaje para que podamos ayudarte:",
+    "extractData": "Consulta_Personalizada",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "RESP_G_FIN"
+      }
+    ]
+  },
+  {
+    "id": "RESP_G_FIN",
+    "text": "¡Muchas gracias! Alguien va a responder a tu pregunta a la brevedad. ¡Saludos!",
+    "options": [
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  },
+  {
+    "id": "MSG_CIERRE",
+    "text": "📌 Si necesitas consultar algo más, responde VER MENU para volver al inicio.",
+    "extractData": "Accion_Reinicio",
+    "options": [
+      {
+        "match": "VER MENU",
+        "nextId": "MSG_INICIAL"
+      },
+      {
+        "match": "*",
+        "nextId": "MSG_CIERRE"
+      }
+    ]
+  }
+]
